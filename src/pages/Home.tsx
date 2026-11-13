@@ -6,7 +6,11 @@ import { ProjectCard } from "../components/ProjectCard";
 import { ProjectViewer } from "../components/ProjectViewer";
 import { DEMO_PROJECTS } from "../data/demo";
 import { fetchPublishedProjects } from "../lib/projects";
-import { fetchHeroImage } from "../lib/siteSettings";
+import {
+  DEFAULT_HERO_COPY,
+  fetchSiteSettings,
+  getHeroCopy,
+} from "../lib/siteSettings";
 import { contactEmail, isSupabaseConfigured, linkedInUrl, supabase } from "../lib/supabase";
 import type { Project } from "../lib/types";
 import { errorMessage } from "../lib/utils";
@@ -84,12 +88,15 @@ export default function Home() {
   const { projects, loading, error, reload } = usePublishedProjects();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [heroImage, setHeroImage] = useState(heroRender);
+  const [heroCopy, setHeroCopy] = useState(DEFAULT_HERO_COPY);
 
   useEffect(() => {
     let active = true;
-    void fetchHeroImage()
-      .then((url) => {
-        if (active && url) setHeroImage(url);
+    void fetchSiteSettings()
+      .then((settings) => {
+        if (!active) return;
+        if (settings?.hero_image_url) setHeroImage(settings.hero_image_url);
+        setHeroCopy(getHeroCopy(settings));
       })
       .catch(() => undefined);
     return () => {
@@ -127,24 +134,30 @@ export default function Home() {
             <div className="reveal">
               <p className="mono flex items-center gap-3 text-[10px] uppercase text-[#1557a8]">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#1557a8]" />
-                Portfolio · Conception mécanique
+                {heroCopy.eyebrow}
               </p>
-              <h1 className="mt-8 text-[clamp(2.75rem,7vw,5.7rem)] font-semibold leading-[0.96] tracking-[-0.065em] text-[#10151c]">
-                Mechanical
-                <br />
-                Design <span className="text-[#1557a8]">&</span>
-                <br />
-                SolidWorks<span className="text-[#1557a8]">.</span>
+              <h1 className="mt-8 whitespace-pre-line text-[clamp(2.75rem,7vw,5.7rem)] font-semibold leading-[0.96] tracking-[-0.065em] text-[#10151c]">
+                {heroCopy.title.split("\n").map((line, index) => (
+                  <span className="block" key={`${index}-${line}`}>
+                    {line.split("&").map((part, partIndex, parts) => (
+                      <span key={`${partIndex}-${part}`}>
+                        {part}
+                        {partIndex < parts.length - 1 && (
+                          <span className="text-[#1557a8]">&</span>
+                        )}
+                      </span>
+                    ))}
+                  </span>
+                ))}
               </h1>
               <p className="mt-8 max-w-lg text-base leading-7 text-[#66707c]">
-                Modélisation de pièces mécaniques, assemblages et visualisations 3D
-                techniques, conçus sous SolidWorks.
+                {heroCopy.description}
               </p>
               <a
                 href="#projects"
                 className="mt-9 inline-flex items-center gap-2 border-b border-[#1557a8] pb-1 text-sm font-semibold text-[#1557a8] transition hover:gap-3"
               >
-                Voir les réalisations <ArrowDownRight size={17} strokeWidth={1.8} />
+                {heroCopy.cta} <ArrowDownRight size={17} strokeWidth={1.8} />
               </a>
             </div>
 

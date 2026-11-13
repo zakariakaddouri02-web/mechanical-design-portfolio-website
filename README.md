@@ -134,7 +134,7 @@ Depuis le tableau de bord :
 - **Publier / Masquer** : contrôle la visibilité publique immédiate.
 - **Supprimer** : supprime la ligne et les fichiers correspondants dans Storage.
 - **Aperçu** sur une ligne : ouvre le rendu public du projet, publié ou non.
-- **Réglages du site** : remplace l'image d'accueil du portfolio.
+- **Réglages du site** : remplace l'image et les textes principaux du bloc d'accueil.
 
 Formats et limites : images jusqu'à 10 Mo, modèles GLB autonomes jusqu'à 50 Mo. Utilisez de préférence un `.glb` contenant ses textures (pas de `.gltf` avec fichiers externes).
 

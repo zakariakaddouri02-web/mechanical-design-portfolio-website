@@ -22,7 +22,13 @@ import {
   uploadProjectAsset,
 } from "../lib/projects";
 import { supabase } from "../lib/supabase";
-import { fetchHeroImage, saveHeroImage } from "../lib/siteSettings";
+import {
+  DEFAULT_HERO_COPY,
+  fetchSiteSettings,
+  getHeroCopy,
+  saveSiteSettings,
+  type HeroCopy,
+} from "../lib/siteSettings";
 import { getProjectImages, type Project } from "../lib/types";
 import { errorMessage } from "../lib/utils";
 
@@ -38,15 +44,18 @@ export default function Dashboard() {
   const [heroImage, setHeroImage] = useState<string | null>(null);
   const [heroFile, setHeroFile] = useState<File | null>(null);
   const [heroPreview, setHeroPreview] = useState<string | null>(null);
+  const [heroCopy, setHeroCopy] = useState<HeroCopy>(DEFAULT_HERO_COPY);
   const [settingsBusy, setSettingsBusy] = useState(false);
   const [settingsError, setSettingsError] = useState("");
   const [settingsMessage, setSettingsMessage] = useState("");
 
   useEffect(() => {
     let active = true;
-    void fetchHeroImage()
-      .then((url) => {
-        if (active) setHeroImage(url);
+    void fetchSiteSettings()
+      .then((settings) => {
+        if (!active) return;
+        setHeroImage(settings?.hero_image_url || null);
+        setHeroCopy(getHeroCopy(settings));
       })
       .catch((cause) => {
         if (active) setSettingsError(errorMessage(cause));
@@ -143,10 +152,29 @@ export default function Dashboard() {
     setSettingsMessage("");
     try {
       const url = await uploadProjectAsset(heroFile, "image");
-      await saveHeroImage(url);
+      await saveSiteSettings({ hero_image_url: url });
       setHeroImage(url);
       setHeroFile(null);
       setSettingsMessage("L'image d'accueil a été mise à jour.");
+    } catch (cause) {
+      setSettingsError(errorMessage(cause));
+    } finally {
+      setSettingsBusy(false);
+    }
+  }
+
+  async function handleSaveHeroCopy() {
+    setSettingsBusy(true);
+    setSettingsError("");
+    setSettingsMessage("");
+    try {
+      await saveSiteSettings({
+        hero_eyebrow: heroCopy.eyebrow,
+        hero_title: heroCopy.title,
+        hero_description: heroCopy.description,
+        hero_cta: heroCopy.cta,
+      });
+      setSettingsMessage("Le texte d'accueil a été mis à jour.");
     } catch (cause) {
       setSettingsError(errorMessage(cause));
     } finally {
@@ -236,6 +264,30 @@ export default function Dashboard() {
             </div>
             {settingsMessage && <p role="status" className="mt-4 text-sm text-[#257245]">{settingsMessage}</p>}
             {settingsError && <p role="alert" className="mt-4 text-sm text-[#9b3b3b]">{settingsError}</p>}
+            <div className="mt-7 border-t border-[#e8ecf1] pt-6">
+              <h3 className="text-sm font-semibold text-[#202a36]">Texte d'accueil</h3>
+              <div className="mt-4 grid gap-4">
+                <label className="grid gap-2 text-xs font-medium text-[#4d5966]">
+                  Petit titre
+                  <input value={heroCopy.eyebrow} onChange={(event) => setHeroCopy((copy) => ({ ...copy, eyebrow: event.target.value }))} maxLength={100} className="rounded-lg border border-[#d9e0e8] px-3 py-2.5 text-sm font-normal text-[#202a36] outline-none focus:border-[#1557a8]" />
+                </label>
+                <label className="grid gap-2 text-xs font-medium text-[#4d5966]">
+                  Grand titre (une ligne par retour à la ligne)
+                  <textarea value={heroCopy.title} onChange={(event) => setHeroCopy((copy) => ({ ...copy, title: event.target.value }))} rows={3} maxLength={160} className="resize-y rounded-lg border border-[#d9e0e8] px-3 py-2.5 text-sm font-normal text-[#202a36] outline-none focus:border-[#1557a8]" />
+                </label>
+                <label className="grid gap-2 text-xs font-medium text-[#4d5966]">
+                  Description
+                  <textarea value={heroCopy.description} onChange={(event) => setHeroCopy((copy) => ({ ...copy, description: event.target.value }))} rows={3} maxLength={500} className="resize-y rounded-lg border border-[#d9e0e8] px-3 py-2.5 text-sm font-normal text-[#202a36] outline-none focus:border-[#1557a8]" />
+                </label>
+                <label className="grid gap-2 text-xs font-medium text-[#4d5966]">
+                  Texte du bouton
+                  <input value={heroCopy.cta} onChange={(event) => setHeroCopy((copy) => ({ ...copy, cta: event.target.value }))} maxLength={80} className="rounded-lg border border-[#d9e0e8] px-3 py-2.5 text-sm font-normal text-[#202a36] outline-none focus:border-[#1557a8]" />
+                </label>
+              </div>
+              <button type="button" onClick={() => void handleSaveHeroCopy()} disabled={settingsBusy} className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#1557a8] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#0f468c] disabled:opacity-50">
+                <Save size={14} /> {settingsBusy ? "Enregistrement..." : "Enregistrer le texte"}
+              </button>
+            </div>
           </section>
         )}
 

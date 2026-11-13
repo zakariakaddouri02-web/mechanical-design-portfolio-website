@@ -3,8 +3,17 @@
 create table if not exists public.site_settings (
   id smallint primary key default 1 check (id = 1),
   hero_image_url text,
+  hero_eyebrow text,
+  hero_title text,
+  hero_description text,
+  hero_cta text,
   updated_at timestamptz not null default now()
 );
+
+alter table public.site_settings add column if not exists hero_eyebrow text;
+alter table public.site_settings add column if not exists hero_title text;
+alter table public.site_settings add column if not exists hero_description text;
+alter table public.site_settings add column if not exists hero_cta text;
 
 alter table public.site_settings enable row level security;
 grant select on public.site_settings to anon, authenticated;
