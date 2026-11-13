@@ -1,4 +1,4 @@
-import { Box, Move3D } from "lucide-react";
+import { Move3D } from "lucide-react";
 import { getProjectImages, type Project } from "../lib/types";
 import { ImageLightbox } from "./ImageLightbox";
 import { Modal } from "./Modal";
@@ -31,15 +31,6 @@ export function ProjectViewer({ project, onClose }: ProjectViewerProps) {
       labelledBy="model-viewer-title"
     >
       <div className="flex flex-col gap-4 border-b border-[#e6eaf0] px-5 py-5 pr-16 sm:px-7 sm:py-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="mono rounded-full bg-[#eaf2fd] px-3 py-1.5 text-[9px] uppercase text-[#1557a8]">
-            <Box size={12} className="mr-2 inline" strokeWidth={1.8} />
-            Modèle 3D interactif
-          </span>
-          <span className="mono text-[9px] uppercase text-[#98a0ab]">
-            Fichier {project.model_format.toUpperCase()}
-          </span>
-        </div>
         <div>
           <h2
             id="model-viewer-title"

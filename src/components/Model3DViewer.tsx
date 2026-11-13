@@ -202,13 +202,6 @@ export function Model3DViewer({
         </div>
       )}
 
-      <div className="pointer-events-none absolute left-3 top-3 z-10 sm:left-5 sm:top-5">
-        <span className="mono inline-flex items-center gap-2 rounded-full border border-[#1557a8]/15 bg-white/85 px-3 py-2 text-[9px] uppercase text-[#1557a8] backdrop-blur-sm">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#1557a8]" />
-          GLB interactif
-        </span>
-      </div>
-
       <div className="pointer-events-none absolute right-3 top-3 z-10 flex flex-wrap justify-end gap-2 sm:right-5 sm:top-5">
         <div className="pointer-events-auto flex gap-2">
           <button

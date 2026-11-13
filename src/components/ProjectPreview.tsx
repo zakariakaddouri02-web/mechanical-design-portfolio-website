@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowUpRight, Box, Eye, Images, X } from "lucide-react";
+import { ArrowUpRight, Eye, X } from "lucide-react";
 import { getProjectImages, type Project } from "../lib/types";
 import { Modal } from "./Modal";
 import { ProjectViewer } from "./ProjectViewer";
@@ -71,10 +71,6 @@ export function ProjectPreview({ project, onClose }: ProjectPreviewProps) {
           </button>
 
           <div className="flex flex-col justify-center">
-            <span className="mono inline-flex w-fit items-center gap-2 rounded-full bg-[#eaf2fd] px-3 py-2 text-[9px] uppercase text-[#1557a8]">
-              {isModel ? <Box size={12} /> : <Images size={12} />}
-              {isModel ? "Modèle 3D interactif" : `${images.length} image${images.length > 1 ? "s" : ""}`}
-            </span>
             <h3 className="mt-5 text-2xl font-semibold leading-tight tracking-[-0.04em]">
               {project.title || "Sans titre"}
             </h3>
@@ -83,10 +79,6 @@ export function ProjectPreview({ project, onClose }: ProjectPreviewProps) {
             )}
 
             <dl className="mt-6 space-y-2 border-t border-[#e7ebf0] pt-5 text-xs text-[#6d7480]">
-              <div className="flex justify-between gap-4">
-                <dt>Type</dt>
-                <dd className="font-medium text-[#28323e]">{isModel ? `Fichier ${project.model_format.toUpperCase()}` : "Galerie d'images"}</dd>
-              </div>
               <div className="flex justify-between gap-4">
                 <dt>Visibilité</dt>
                 <dd className="font-medium text-[#28323e]">
