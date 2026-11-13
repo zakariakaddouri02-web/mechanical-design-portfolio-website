@@ -19,15 +19,16 @@ export function ConfigNotice({
         <p className="mt-3 text-sm leading-7 text-[#68717d]">
           L'authentification et la gestion des projets utilisent Supabase Auth,
           PostgreSQL et Storage. Aucun identifiant n'est stocké dans le code.
-          Ajoutez les variables suivantes dans <code>.env.local</code> puis sur Vercel :
+          Ajoutez ces variables dans Netlify, sous <code>Site configuration → Environment variables</code>,
+          puis relancez le déploiement :
         </p>
         <pre className="mono mt-6 overflow-x-auto rounded-xl bg-[#111820] p-4 text-xs leading-6 text-[#dce9fb]">
-{`VITE_SUPABASE_URL=...
-VITE_SUPABASE_ANON_KEY=...`}
+{`VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...`}
         </pre>
         <p className="mt-4 text-xs leading-6 text-[#7a828d]">
-          Exécutez ensuite <code>supabase/schema.sql</code> et créez l'utilisateur
-          administrateur depuis le tableau de bord Supabase.
+          Utilisez uniquement la clé publique publishable. Ne mettez jamais une clé
+          <code> sb_secret_</code> ou <code> service_role</code> dans les variables <code>VITE_*</code>.
         </p>
         <Link
           to="/"
