@@ -51,6 +51,7 @@ create table if not exists public.projects (
   cover_url text not null check (char_length(btrim(cover_url)) > 0),
   image_urls text[] not null default '{}',
   model_url text,
+  model_format text not null default 'glb' check (model_format in ('glb', 'stl')),
   auto_rotate boolean not null default false,
   is_published boolean not null default false,
   created_at timestamptz not null default now(),
@@ -138,7 +139,7 @@ values
     'portfolio-models',
     true,
     52428800,
-    array['model/gltf-binary', 'application/octet-stream']
+    array['model/gltf-binary', 'application/octet-stream', 'model/stl', 'application/sla']
   )
 on conflict (id) do update set
   public = excluded.public,
@@ -182,7 +183,7 @@ create policy "admin uploads portfolio models"
   with check (
     bucket_id = 'portfolio-models'
     and (select public.is_admin())
-    and lower(storage.extension(name)) = 'glb'
+    and lower(storage.extension(name)) in ('glb', 'stl')
   );
 
 create policy "admin updates portfolio assets"

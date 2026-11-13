@@ -14,7 +14,7 @@ import {
   uploadProjectAsset,
   validateAssetFile,
 } from "../lib/projects";
-import type { Project, ProjectInput, ProjectType } from "../lib/types";
+import type { ModelFormat, Project, ProjectInput, ProjectType } from "../lib/types";
 import { errorMessage, fileNameFromUrl, formatBytes } from "../lib/utils";
 import { Modal } from "./Modal";
 import { ProjectPreview } from "./ProjectPreview";
@@ -36,6 +36,7 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState<ProjectType>("images");
+  const [modelFormat, setModelFormat] = useState<ModelFormat>("glb");
   const [coverUrl, setCoverUrl] = useState("");
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
   const [modelUrl, setModelUrl] = useState("");
@@ -58,6 +59,7 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
     setTitle(project?.title || "");
     setDescription(project?.description || "");
     setType(project?.type || "images");
+    setModelFormat(project?.model_format || "glb");
     setCoverUrl(project?.cover_url || "");
     setGalleryUrls(project?.image_urls || []);
     setModelUrl(project?.model_url || "");
@@ -144,6 +146,11 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
       setError(validation);
       return;
     }
+    const extension = file.name.split(".").pop()?.toLowerCase();
+    if (extension !== modelFormat) {
+      setError(`Choisissez un fichier .${modelFormat} pour le format sélectionné.`);
+      return;
+    }
     setModelFile(file);
     setError("");
   }
@@ -167,7 +174,7 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
       return null;
     }
     if (type === "model3d" && !modelSource) {
-      setError("Importez un fichier .glb pour un projet 3D.");
+      setError(`Importez un fichier .${modelFormat} pour ce projet 3D.`);
       return null;
     }
 
@@ -180,6 +187,7 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
       cover_url: coverSource,
       image_urls: type === "images" ? [...galleryUrls, ...galleryPreviews] : [],
       model_url: type === "model3d" ? modelSource : null,
+      model_format: type === "model3d" ? modelFormat : "glb",
       auto_rotate: type === "model3d" ? autoRotate : false,
       is_published: isPublished,
       created_at: project?.created_at || timestamp,
@@ -225,6 +233,7 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
         cover_url: finalCoverUrl,
         image_urls: type === "images" ? [...galleryUrls, ...uploadedGallery] : [],
         model_url: finalModelUrl,
+        model_format: type === "model3d" ? modelFormat : "glb",
         auto_rotate: draft.auto_rotate,
         is_published: draft.is_published,
       };
@@ -334,8 +343,8 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
             >
               <Box size={18} strokeWidth={1.8} />
               <span>
-                <strong className="block font-semibold">Modèle 3D GLB</strong>
-                <span className="text-xs opacity-70">Visualiseur interactif</span>
+                <strong className="block font-semibold">Modèle 3D</strong>
+                <span className="text-xs opacity-70">GLB ou STL avec acier</span>
               </span>
             </button>
           </div>
@@ -424,21 +433,49 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
 
           {type === "model3d" && (
             <div className="space-y-5 sm:col-span-2">
+              <fieldset>
+                <legend className="mb-2 text-xs font-semibold text-[#34404d]">Format du modèle 3D</legend>
+                <div className="flex flex-wrap gap-2">
+                  {([
+                    ["glb", "GLB · matériau intégré"],
+                    ["stl", "STL · acier"],
+                  ] as const).map(([format, label]) => (
+                    <button
+                      key={format}
+                      type="button"
+                      aria-pressed={modelFormat === format}
+                      onClick={() => {
+                        if (modelFormat === format) return;
+                        setModelFormat(format);
+                        setModelUrl("");
+                        setModelFile(null);
+                        setError("");
+                      }}
+                      className={`rounded-full border px-4 py-2 text-xs font-medium transition ${modelFormat === format ? "border-[#1557a8] bg-[#f1f6fd] text-[#1557a8]" : "border-[#dce2e9] bg-white text-[#52606e] hover:border-[#a9bdd6]"}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                {modelFormat === "stl" && (
+                  <p className="mt-2 text-xs text-[#7a828d]">Le fichier STL ne contient pas de matériau. Un aspect acier est appliqué automatiquement dans le visualiseur.</p>
+                )}
+              </fieldset>
               <div>
                 <span className="mb-2 block text-xs font-semibold text-[#34404d]">
-                  Fichier 3D GLB *
+                  Fichier 3D {modelFormat.toUpperCase()} *
                 </span>
                 <label htmlFor="model-input" className={uploadBoxClass}>
                   <Box size={18} className="text-[#1557a8]" strokeWidth={1.8} />
                   <span className="font-medium text-[#34404d]">
-                    {modelSource ? "Remplacer le modèle GLB" : "Importer un modèle GLB"}
+                    {modelSource ? `Remplacer le modèle ${modelFormat.toUpperCase()}` : `Importer un modèle ${modelFormat.toUpperCase()}`}
                   </span>
-                  <span>Un seul fichier .glb autonome · 50 Mo max.</span>
+                  <span>Un fichier .{modelFormat} · 50 Mo max.</span>
                 </label>
                 <input
                   id="model-input"
                   type="file"
-                  accept=".glb,model/gltf-binary"
+                  accept={modelFormat === "stl" ? ".stl,model/stl,application/sla" : ".glb,model/gltf-binary"}
                   className="sr-only"
                   onChange={(event) => {
                     chooseModel(event.target.files?.[0]);

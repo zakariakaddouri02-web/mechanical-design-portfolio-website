@@ -1,4 +1,5 @@
 export type ProjectType = "images" | "model3d";
+export type ModelFormat = "glb" | "stl";
 
 export interface Project {
   id: string;
@@ -8,6 +9,7 @@ export interface Project {
   cover_url: string;
   image_urls: string[];
   model_url: string | null;
+  model_format: ModelFormat;
   auto_rotate: boolean;
   is_published: boolean;
   created_at: string;

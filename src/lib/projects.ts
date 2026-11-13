@@ -22,6 +22,7 @@ function normalizeProjects(data: unknown): Project[] {
     description: row.description || "",
     image_urls: Array.isArray(row.image_urls) ? row.image_urls : [],
     model_url: row.model_url || null,
+    model_format: row.model_format === "stl" ? "stl" : "glb",
     auto_rotate: Boolean(row.auto_rotate),
     is_published: Boolean(row.is_published),
   }));
@@ -109,8 +110,8 @@ export function validateAssetFile(
     }
     if (file.size > MAX_IMAGE_BYTES) return "Image trop volumineuse (10 Mo max.).";
   } else {
-    if (extension !== "glb") {
-      return "Le modèle interactif doit être un fichier .glb.";
+    if (!["glb", "stl"].includes(extension)) {
+      return "Le modèle 3D doit être un fichier .glb ou .stl.";
     }
     if (file.size > MAX_MODEL_BYTES) return "Modèle trop volumineux (50 Mo max.).";
   }
@@ -130,7 +131,7 @@ export async function uploadProjectAsset(
   const path = randomName(extension);
   const contentType =
     kind === "model"
-      ? "model/gltf-binary"
+      ? extension === "stl" ? "model/stl" : "model/gltf-binary"
       : file.type.startsWith("image/")
         ? file.type
         : `image/${extension === "jpg" ? "jpeg" : extension}`;

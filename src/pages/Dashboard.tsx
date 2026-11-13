@@ -314,7 +314,7 @@ export default function Dashboard() {
             <div className="px-6 py-16 text-center">
               <p className="font-medium text-[#34404d]">Aucune réalisation enregistrée.</p>
               <p className="mt-2 text-sm text-[#7a828d]">
-                Ajoutez une galerie d'images ou un modèle GLB pour commencer.
+                Ajoutez une galerie d'images ou un modèle 3D pour commencer.
               </p>
             </div>
           ) : (
@@ -335,7 +335,7 @@ export default function Dashboard() {
                       <div className="mb-2 flex flex-wrap items-center gap-2">
                         <span className="mono inline-flex items-center gap-1.5 rounded-full bg-[#eef3f9] px-2.5 py-1 text-[9px] uppercase text-[#1557a8]">
                           {isModel ? <Box size={11} /> : <Images size={11} />}
-                          {isModel ? "GLB interactif" : `${imageCount} image${imageCount > 1 ? "s" : ""}`}
+                          {isModel ? `${project.model_format.toUpperCase()} interactif` : `${imageCount} image${imageCount > 1 ? "s" : ""}`}
                         </span>
                         <span
                           className={`mono rounded-full px-2.5 py-1 text-[9px] uppercase ${

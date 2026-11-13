@@ -19,7 +19,8 @@ Portfolio professionnel, minimaliste et responsive pour présenter des réalisat
 ├── .env.example
 ├── supabase/
 │   ├── schema.sql              # Tables, administrateur unique, RLS, Storage, Realtime
-│   └── site-settings.sql       # Migration de l'image d'accueil pour un projet existant
+│   ├── site-settings.sql       # Migration de l'image d'accueil pour un projet existant
+│   └── stl-support.sql         # Migration pour accepter les modèles STL
 ├── public/                     # (aucun média requis : les visuels de démo sont inline)
 └── src/
     ├── App.tsx                 # Routeur + protection de l'administration
@@ -80,7 +81,7 @@ Sans ces variables, la page publique affiche un **aperçu de démonstration** av
 1. Créez un projet sur [supabase.com](https://supabase.com).
 2. Ouvrez **SQL Editor → New query**.
 3. Collez tout le contenu de `supabase/schema.sql`, puis cliquez sur **Run**.
-4. Sur un projet déjà initialisé, exécutez aussi `supabase/site-settings.sql` pour activer le réglage de l'image d'accueil.
+4. Sur un projet déjà initialisé, exécutez `supabase/site-settings.sql` pour l'image d'accueil et `supabase/stl-support.sql` pour les modèles STL.
 
 Le script crée :
 
@@ -136,7 +137,7 @@ Depuis le tableau de bord :
 - **Aperçu** sur une ligne : ouvre le rendu public du projet, publié ou non.
 - **Réglages du site** : remplace l'image et les textes principaux du bloc d'accueil.
 
-Formats et limites : images jusqu'à 10 Mo, modèles GLB autonomes jusqu'à 50 Mo. Utilisez de préférence un `.glb` contenant ses textures (pas de `.gltf` avec fichiers externes).
+Formats et limites : images jusqu'à 10 Mo, modèles GLB ou STL jusqu'à 50 Mo. Le GLB peut conserver ses matériaux; les STL reçoivent automatiquement un matériau acier dans le visualiseur.
 
 ### Visualiseur 3D
 

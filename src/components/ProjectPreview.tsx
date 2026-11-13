@@ -85,7 +85,7 @@ export function ProjectPreview({ project, onClose }: ProjectPreviewProps) {
             <dl className="mt-6 space-y-2 border-t border-[#e7ebf0] pt-5 text-xs text-[#6d7480]">
               <div className="flex justify-between gap-4">
                 <dt>Type</dt>
-                <dd className="font-medium text-[#28323e]">{isModel ? "Fichier GLB" : "Galerie d'images"}</dd>
+                <dd className="font-medium text-[#28323e]">{isModel ? `Fichier ${project.model_format.toUpperCase()}` : "Galerie d'images"}</dd>
               </div>
               <div className="flex justify-between gap-4">
                 <dt>Visibilité</dt>

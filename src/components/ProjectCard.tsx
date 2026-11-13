@@ -42,7 +42,7 @@ export function ProjectCard({ project, index, onOpen }: ProjectCardProps) {
                 <Images size={13} className="text-[#1557a8]" strokeWidth={1.9} />
               )}
               {isModel
-                ? "Modèle 3D interactif"
+                ? project.model_format === "stl" ? "Modèle STL · acier" : "Modèle GLB interactif"
                 : `${imageCount} image${imageCount > 1 ? "s" : ""}`}
             </span>
           </div>
