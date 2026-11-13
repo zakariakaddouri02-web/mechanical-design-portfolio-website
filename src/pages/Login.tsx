@@ -5,8 +5,6 @@ import {
   ArrowRight,
   Eye,
   EyeOff,
-  LockKeyhole,
-  ShieldCheck,
 } from "lucide-react";
 import { ConfigNotice } from "../components/ConfigNotice";
 import { checkIsAdmin, useAuth } from "../lib/auth";
@@ -111,16 +109,6 @@ export default function Login() {
               du portfolio
             </h2>
           </div>
-          <div className="relative space-y-4 text-sm text-white/65">
-            <p className="flex items-center gap-3">
-              <ShieldCheck size={17} className="text-[#7eb2f1]" strokeWidth={1.8} />
-              Authentification Supabase Auth
-            </p>
-            <p className="flex items-center gap-3">
-              <LockKeyhole size={17} className="text-[#7eb2f1]" strokeWidth={1.8} />
-              Opérations protégées par RLS
-            </p>
-          </div>
         </div>
 
         <div className="p-7 sm:p-10">
@@ -136,9 +124,6 @@ export default function Login() {
             <h1 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[#111820]">
               Accès administrateur
             </h1>
-            <p className="mt-2 text-sm leading-6 text-[#737c88]">
-              Connectez-vous avec le compte créé dans Supabase Auth.
-            </p>
           </div>
 
           <form onSubmit={(event) => void handleSubmit(event)} className="mt-8 space-y-5">
@@ -208,9 +193,6 @@ export default function Login() {
             </button>
           </form>
 
-          <p className="mt-7 text-xs leading-5 text-[#949ca6]">
-            Un seul administrateur est autorisé. Aucune inscription publique n'est proposée.
-          </p>
         </div>
       </div>
     </main>
