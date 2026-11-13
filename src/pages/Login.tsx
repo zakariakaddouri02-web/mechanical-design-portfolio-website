@@ -14,7 +14,7 @@ import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { session, isAdmin, sessionLoading, adminLoading, signOut } = useAuth();
+  const { session, isAdmin, sessionLoading, adminLoading, authError, signOut } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -28,11 +28,15 @@ export default function Login() {
   }, [session, isAdmin, sessionLoading, adminLoading, navigate]);
 
   useEffect(() => {
+    if (authError) {
+      setFormError(authError);
+      return;
+    }
     if (session && !adminLoading && !isAdmin) {
       setFormError("Ce compte n'est pas autorisé à administrer le portfolio.");
       void signOut();
     }
-  }, [session, isAdmin, adminLoading, signOut]);
+  }, [session, isAdmin, adminLoading, authError, signOut]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -52,7 +56,18 @@ export default function Login() {
       return;
     }
 
-    const allowed = await checkIsAdmin(data.user.id);
+    let allowed: boolean;
+    try {
+      allowed = await checkIsAdmin(data.user.id);
+    } catch (cause) {
+      setFormError(
+        cause instanceof Error
+          ? `Vérification administrateur impossible : ${cause.message}`
+          : "Vérification administrateur impossible. Réessayez."
+      );
+      setSubmitting(false);
+      return;
+    }
     if (!allowed) {
       await client.auth.signOut();
       setFormError("Ce compte n'est pas autorisé à administrer le portfolio.");

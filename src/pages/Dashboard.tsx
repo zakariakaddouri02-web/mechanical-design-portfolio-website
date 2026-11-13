@@ -4,9 +4,12 @@ import {
   Eye,
   EyeOff,
   Images,
+  ImagePlus,
   LogOut,
   Pencil,
   Plus,
+  Save,
+  Settings2,
   Trash2,
 } from "lucide-react";
 import { ProjectEditor } from "../components/ProjectEditor";
@@ -16,8 +19,10 @@ import {
   deleteProject,
   fetchAllProjects,
   setProjectPublished,
+  uploadProjectAsset,
 } from "../lib/projects";
 import { supabase } from "../lib/supabase";
+import { fetchHeroImage, saveHeroImage } from "../lib/siteSettings";
 import { getProjectImages, type Project } from "../lib/types";
 import { errorMessage } from "../lib/utils";
 
@@ -29,6 +34,37 @@ export default function Dashboard() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [editor, setEditor] = useState<{ project: Project | null } | null>(null);
   const [viewProject, setViewProject] = useState<Project | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [heroImage, setHeroImage] = useState<string | null>(null);
+  const [heroFile, setHeroFile] = useState<File | null>(null);
+  const [heroPreview, setHeroPreview] = useState<string | null>(null);
+  const [settingsBusy, setSettingsBusy] = useState(false);
+  const [settingsError, setSettingsError] = useState("");
+  const [settingsMessage, setSettingsMessage] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    void fetchHeroImage()
+      .then((url) => {
+        if (active) setHeroImage(url);
+      })
+      .catch((cause) => {
+        if (active) setSettingsError(errorMessage(cause));
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!heroFile) {
+      setHeroPreview(null);
+      return;
+    }
+    const preview = URL.createObjectURL(heroFile);
+    setHeroPreview(preview);
+    return () => URL.revokeObjectURL(preview);
+  }, [heroFile]);
 
   const load = useCallback(async () => {
     if (!supabase) {
@@ -100,6 +136,24 @@ export default function Dashboard() {
     }
   }
 
+  async function handleSaveHeroImage() {
+    if (!heroFile) return;
+    setSettingsBusy(true);
+    setSettingsError("");
+    setSettingsMessage("");
+    try {
+      const url = await uploadProjectAsset(heroFile, "image");
+      await saveHeroImage(url);
+      setHeroImage(url);
+      setHeroFile(null);
+      setSettingsMessage("L'image d'accueil a été mise à jour.");
+    } catch (cause) {
+      setSettingsError(errorMessage(cause));
+    } finally {
+      setSettingsBusy(false);
+    }
+  }
+
   const actionClass =
     "inline-flex items-center gap-1.5 rounded-full border border-[#dce2e9] bg-white px-3 py-2 text-xs font-medium text-[#4d5966] transition hover:border-[#9db8d8] hover:text-[#1557a8] disabled:opacity-45";
 
@@ -144,12 +198,46 @@ export default function Dashboard() {
           </div>
           <button
             type="button"
+            onClick={() => setSettingsOpen((open) => !open)}
+            className={actionClass}
+          >
+            <Settings2 size={15} /> Réglages du site
+          </button>
+          <button
+            type="button"
             onClick={() => setEditor({ project: null })}
             className="inline-flex items-center gap-2 rounded-full bg-[#1557a8] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0f468c]"
           >
             <Plus size={16} /> Nouvelle réalisation
           </button>
         </div>
+
+        {settingsOpen && (
+          <section className="mt-8 rounded-[16px] border border-[#e1e6ec] bg-white p-5 shadow-[0_12px_40px_rgba(20,35,60,0.05)] sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="mono text-[10px] uppercase text-[#1557a8]">Réglages du site</p>
+                <h2 className="mt-2 text-lg font-semibold text-[#202a36]">Image d'accueil</h2>
+                <p className="mt-1 text-sm text-[#7a828d]">Choisissez le visuel affiché en haut du portfolio. JPG, PNG, WEBP ou AVIF, 10 Mo maximum.</p>
+              </div>
+              {(heroPreview || heroImage) && (
+                <img src={heroPreview || heroImage || undefined} alt="Aperçu de l'image d'accueil" className="h-24 w-36 rounded-lg border border-[#e1e6ec] object-cover" />
+              )}
+            </div>
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#dce2e9] bg-white px-4 py-2.5 text-xs font-medium text-[#4d5966] hover:border-[#9db8d8] hover:text-[#1557a8]">
+                <ImagePlus size={15} /> Choisir une image
+                <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="sr-only" onChange={(event) => setHeroFile(event.target.files?.[0] || null)} />
+              </label>
+              <button type="button" onClick={() => void handleSaveHeroImage()} disabled={!heroFile || settingsBusy} className="inline-flex items-center gap-2 rounded-full bg-[#1557a8] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#0f468c] disabled:opacity-50">
+                <Save size={14} /> {settingsBusy ? "Enregistrement..." : "Enregistrer"}
+              </button>
+              {heroFile && <span className="max-w-xs truncate text-xs text-[#7a828d]">{heroFile.name}</span>}
+            </div>
+            {settingsMessage && <p role="status" className="mt-4 text-sm text-[#257245]">{settingsMessage}</p>}
+            {settingsError && <p role="alert" className="mt-4 text-sm text-[#9b3b3b]">{settingsError}</p>}
+          </section>
+        )}
 
         {error && (
           <p role="alert" className="mt-8 rounded-[10px] border border-[#f0cfcf] bg-[#fff7f7] px-4 py-3 text-sm text-[#9b3b3b]">

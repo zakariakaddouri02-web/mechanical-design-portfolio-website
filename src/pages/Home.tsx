@@ -6,6 +6,7 @@ import { ProjectCard } from "../components/ProjectCard";
 import { ProjectViewer } from "../components/ProjectViewer";
 import { DEMO_PROJECTS } from "../data/demo";
 import { fetchPublishedProjects } from "../lib/projects";
+import { fetchHeroImage } from "../lib/siteSettings";
 import { contactEmail, isSupabaseConfigured, linkedInUrl, supabase } from "../lib/supabase";
 import type { Project } from "../lib/types";
 import { errorMessage } from "../lib/utils";
@@ -82,6 +83,19 @@ function SkeletonGrid() {
 export default function Home() {
   const { projects, loading, error, reload } = usePublishedProjects();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [heroImage, setHeroImage] = useState(heroRender);
+
+  useEffect(() => {
+    let active = true;
+    void fetchHeroImage()
+      .then((url) => {
+        if (active && url) setHeroImage(url);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#f7f8fa]">
@@ -139,7 +153,7 @@ export default function Home() {
               <div className="relative rounded-[16px] border border-[#dfe5ec] bg-white p-2 shadow-[0_25px_70px_rgba(24,40,64,0.12)]">
                 <div className="relative aspect-[4/3] overflow-hidden rounded-[10px] bg-[#eef1f4]">
                   <img
-                    src={heroRender}
+                    src={heroImage}
                     alt="Rendu CAO d'un assemblage mécanique"
                     className="h-full w-full object-cover"
                   />

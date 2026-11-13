@@ -14,10 +14,24 @@ interface AuthValue {
   isAdmin: boolean;
   sessionLoading: boolean;
   adminLoading: boolean;
+  authError: string | null;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthValue | null>(null);
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  let timeoutId: number | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = window.setTimeout(
+      () => reject(new Error("Supabase ne répond pas. Vérifiez la connexion puis réessayez.")),
+      timeoutMs
+    );
+  });
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+  });
+}
 
 export async function checkIsAdmin(userId: string): Promise<boolean> {
   if (!supabase) return false;
@@ -25,8 +39,10 @@ export async function checkIsAdmin(userId: string): Promise<boolean> {
     .from("admin_users")
     .select("user_id")
     .eq("user_id", userId)
+    .abortSignal(AbortSignal.timeout(12000))
     .maybeSingle();
-  return !error && Boolean(data);
+  if (error) throw new Error(error.message);
+  return Boolean(data);
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -34,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [sessionLoading, setSessionLoading] = useState(Boolean(supabase));
   const [adminLoading, setAdminLoading] = useState(Boolean(supabase));
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     const client = supabase;
@@ -43,17 +60,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     let active = true;
-    void client.auth.getSession().then(({ data }) => {
-      if (!active) return;
-      setAdminLoading(Boolean(data.session?.user?.id));
-      setSession(data.session);
-      setSessionLoading(false);
-    });
+    let authEventReceived = false;
+    void withTimeout(client.auth.getSession(), 12000)
+      .then(({ data, error }) => {
+        if (!active || authEventReceived) return;
+        if (error) throw error;
+        setAuthError(null);
+        setAdminLoading(Boolean(data.session?.user?.id));
+        setSession(data.session);
+        setSessionLoading(false);
+      })
+      .catch((cause: unknown) => {
+        if (!active || authEventReceived) return;
+        setSession(null);
+        setAdminLoading(false);
+        setSessionLoading(false);
+        setAuthError(
+          cause instanceof Error
+            ? cause.message
+            : "La session Supabase n'a pas pu être vérifiée."
+        );
+      });
 
     const {
       data: { subscription },
     } = client.auth.onAuthStateChange((_event, nextSession) => {
       if (!active) return;
+      authEventReceived = true;
+      setAuthError(null);
       setAdminLoading(Boolean(nextSession?.user?.id));
       setSession(nextSession);
       setSessionLoading(false);
@@ -78,7 +112,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void checkIsAdmin(userId)
       .then((allowed) => {
         if (!active) return;
+        setAuthError(null);
         setIsAdmin(allowed);
+      })
+      .catch((cause: unknown) => {
+        if (!active) return;
+        setIsAdmin(false);
+        setAuthError(
+          cause instanceof Error
+            ? `Vérification administrateur impossible : ${cause.message}`
+            : "Vérification administrateur impossible. Réessayez."
+        );
       })
       .finally(() => {
         if (active) setAdminLoading(false);
@@ -95,7 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ session, isAdmin, sessionLoading, adminLoading, signOut }}
+      value={{ session, isAdmin, sessionLoading, adminLoading, authError, signOut }}
     >
       {children}
     </AuthContext.Provider>

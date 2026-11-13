@@ -18,7 +18,8 @@ Portfolio professionnel, minimaliste et responsive pour présenter des réalisat
 ├── vercel.json                 # Réécritures Vercel (si besoin)
 ├── .env.example
 ├── supabase/
-│   └── schema.sql              # Tables, administrateur unique, RLS, Storage, Realtime
+│   ├── schema.sql              # Tables, administrateur unique, RLS, Storage, Realtime
+│   └── site-settings.sql       # Migration de l'image d'accueil pour un projet existant
 ├── public/                     # (aucun média requis : les visuels de démo sont inline)
 └── src/
     ├── App.tsx                 # Routeur + protection de l'administration
@@ -79,6 +80,7 @@ Sans ces variables, la page publique affiche un **aperçu de démonstration** av
 1. Créez un projet sur [supabase.com](https://supabase.com).
 2. Ouvrez **SQL Editor → New query**.
 3. Collez tout le contenu de `supabase/schema.sql`, puis cliquez sur **Run**.
+4. Sur un projet déjà initialisé, exécutez aussi `supabase/site-settings.sql` pour activer le réglage de l'image d'accueil.
 
 Le script crée :
 
@@ -132,6 +134,7 @@ Depuis le tableau de bord :
 - **Publier / Masquer** : contrôle la visibilité publique immédiate.
 - **Supprimer** : supprime la ligne et les fichiers correspondants dans Storage.
 - **Aperçu** sur une ligne : ouvre le rendu public du projet, publié ou non.
+- **Réglages du site** : remplace l'image d'accueil du portfolio.
 
 Formats et limites : images jusqu'à 10 Mo, modèles GLB autonomes jusqu'à 50 Mo. Utilisez de préférence un `.glb` contenant ses textures (pas de `.gltf` avec fichiers externes).
 

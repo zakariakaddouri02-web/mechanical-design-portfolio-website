@@ -32,7 +32,7 @@ function FullScreenLoader({ label }: { label: string }) {
 }
 
 function RequireAdmin({ children }: { children: ReactNode }) {
-  const { session, isAdmin, sessionLoading, adminLoading, signOut } = useAuth();
+  const { session, isAdmin, sessionLoading, adminLoading, authError, signOut } = useAuth();
 
   if (!isSupabaseConfigured) {
     return <ConfigNotice title="Administration non configurée" />;
@@ -41,6 +41,23 @@ function RequireAdmin({ children }: { children: ReactNode }) {
     return <FullScreenLoader label="Vérification de la session" />;
   }
   if (!session) return <Navigate to="/admin/login" replace />;
+  if (authError) {
+    return (
+      <main className="blueprint-grid flex min-h-screen items-center justify-center bg-[#f7f8fa] px-6">
+        <div className="w-full max-w-md rounded-[18px] border border-[#f0d7d7] bg-white p-9 text-center shadow-[0_24px_70px_rgba(20,35,60,0.08)]">
+          <h1 className="text-xl font-semibold tracking-[-0.03em]">Vérification Supabase impossible</h1>
+          <p role="alert" className="mt-3 text-sm leading-6 text-[#9b3b3b]">{authError}</p>
+          <button
+            type="button"
+            onClick={() => void signOut()}
+            className="mt-7 rounded-full bg-[#1557a8] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#0f468c]"
+          >
+            Se déconnecter
+          </button>
+        </div>
+      </main>
+    );
+  }
   if (!isAdmin) {
     return (
       <main className="blueprint-grid flex min-h-screen items-center justify-center bg-[#f7f8fa] px-6">
