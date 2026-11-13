@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [sessionLoading, setSessionLoading] = useState(Boolean(supabase));
-  const [adminLoading, setAdminLoading] = useState(false);
+  const [adminLoading, setAdminLoading] = useState(Boolean(supabase));
 
   useEffect(() => {
     const client = supabase;
@@ -45,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let active = true;
     void client.auth.getSession().then(({ data }) => {
       if (!active) return;
+      setAdminLoading(Boolean(data.session?.user?.id));
       setSession(data.session);
       setSessionLoading(false);
     });
@@ -53,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       data: { subscription },
     } = client.auth.onAuthStateChange((_event, nextSession) => {
       if (!active) return;
+      setAdminLoading(Boolean(nextSession?.user?.id));
       setSession(nextSession);
       setSessionLoading(false);
     });
