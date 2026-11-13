@@ -1,0 +1,129 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --color-industrial: #1557a8;
+}
+
+:root {
+  color-scheme: light;
+  font-synthesis: none;
+  --accent: #1557a8;
+  --ink: #111418;
+  --muted: #6d7480;
+  --paper: #f7f8fa;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "DM Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: #dbe9fb;
+  color: #0d2e56;
+}
+
+.mono {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+  letter-spacing: 0.08em;
+}
+
+.blueprint-grid {
+  background-image:
+    linear-gradient(to right, rgba(21, 87, 168, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(21, 87, 168, 0.07) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.blueprint-grid-fine {
+  background-image:
+    linear-gradient(to right, rgba(21, 87, 168, 0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(21, 87, 168, 0.055) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+.reveal {
+  animation: reveal 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.reveal-delay-1 { animation-delay: 0.08s; }
+.reveal-delay-2 { animation-delay: 0.16s; }
+.reveal-delay-3 { animation-delay: 0.24s; }
+
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 34px;
+  height: 34px;
+  border: 2px solid rgba(21, 87, 168, 0.18);
+  border-top-color: var(--accent);
+  border-radius: 999px;
+  animation: spin-slow 0.8s linear infinite;
+}
+
+.viewer-frame:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+}
+
+.viewer-frame model-viewer {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  --poster-color: transparent;
+}
+
+.viewer-frame model-viewer::part(default-progress-bar) {
+  display: none;
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
