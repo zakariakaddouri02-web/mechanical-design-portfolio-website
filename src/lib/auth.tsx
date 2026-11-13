@@ -19,6 +19,7 @@ interface AuthValue {
 }
 
 const AuthContext = createContext<AuthValue | null>(null);
+const AUTH_CHECK_TIMEOUT_MS = 5000;
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   let timeoutId: number | undefined;
@@ -39,7 +40,7 @@ export async function checkIsAdmin(userId: string): Promise<boolean> {
     .from("admin_users")
     .select("user_id")
     .eq("user_id", userId)
-    .abortSignal(AbortSignal.timeout(12000))
+    .abortSignal(AbortSignal.timeout(AUTH_CHECK_TIMEOUT_MS))
     .maybeSingle();
   if (error) throw new Error(error.message);
   return Boolean(data);
@@ -61,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let active = true;
     let authEventReceived = false;
-    void withTimeout(client.auth.getSession(), 12000)
+    void withTimeout(client.auth.getSession(), AUTH_CHECK_TIMEOUT_MS)
       .then(({ data, error }) => {
         if (!active || authEventReceived) return;
         if (error) throw error;
