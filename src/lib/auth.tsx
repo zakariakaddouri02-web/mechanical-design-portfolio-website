@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -52,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [sessionLoading, setSessionLoading] = useState(Boolean(supabase));
   const [adminLoading, setAdminLoading] = useState(Boolean(supabase));
   const [authError, setAuthError] = useState<string | null>(null);
+  const sessionUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const client = supabase;
@@ -67,12 +69,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!active || authEventReceived) return;
         if (error) throw error;
         setAuthError(null);
-        setAdminLoading(Boolean(data.session?.user?.id));
+        const userId = data.session?.user?.id || null;
+        sessionUserIdRef.current = userId;
+        setAdminLoading(Boolean(userId));
         setSession(data.session);
         setSessionLoading(false);
       })
       .catch((cause: unknown) => {
         if (!active || authEventReceived) return;
+        sessionUserIdRef.current = null;
         setSession(null);
         setAdminLoading(false);
         setSessionLoading(false);
@@ -88,8 +93,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } = client.auth.onAuthStateChange((_event, nextSession) => {
       if (!active) return;
       authEventReceived = true;
-      setAuthError(null);
-      setAdminLoading(Boolean(nextSession?.user?.id));
+      const nextUserId = nextSession?.user?.id || null;
+      const userChanged = sessionUserIdRef.current !== nextUserId;
+      sessionUserIdRef.current = nextUserId;
+      if (userChanged) {
+        setAuthError(null);
+        setIsAdmin(false);
+        setAdminLoading(Boolean(nextUserId));
+      }
       setSession(nextSession);
       setSessionLoading(false);
     });
