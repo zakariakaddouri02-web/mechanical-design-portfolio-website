@@ -1,4 +1,4 @@
-export type ProjectType = "images" | "model3d";
+export type ProjectType = "images" | "model3d" | "video";
 export type ModelFormat = "glb" | "stl";
 
 export interface Project {
@@ -9,6 +9,7 @@ export interface Project {
   cover_url: string;
   image_urls: string[];
   model_url: string | null;
+  video_url: string | null;
   model_format: ModelFormat;
   auto_rotate: boolean;
   is_published: boolean;
@@ -20,6 +21,7 @@ export type ProjectInput = Omit<Project, "id" | "created_at" | "updated_at">;
 
 export const IMAGE_BUCKET = "portfolio-images";
 export const MODEL_BUCKET = "portfolio-models";
+export const VIDEO_BUCKET = "portfolio-videos";
 
 export function getProjectImages(project: Project): string[] {
   return Array.from(

@@ -1,4 +1,4 @@
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Play } from "lucide-react";
 import type { Project } from "../lib/types";
 import { ProjectCardModelPreview } from "./ProjectCardModelPreview";
 
@@ -32,9 +32,14 @@ export function ProjectCard({ project, index, onOpen }: ProjectCardProps) {
               className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.045]"
             />
           )}
-          <span className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[#1557a8] shadow-sm backdrop-blur-md transition duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 sm:bottom-4 sm:right-4">
+          {project.type === "video" ? (
+            <span className="absolute inset-0 flex items-center justify-center">
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 text-[#1557a8] shadow-lg transition duration-300 group-hover:scale-110"><Play size={22} fill="currentColor" strokeWidth={1.8} /></span>
+            </span>
+          ) : <span className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[#1557a8] shadow-sm backdrop-blur-md transition duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 sm:bottom-4 sm:right-4">
             <ArrowUpRight size={18} strokeWidth={1.8} />
           </span>
+          }
         </div>
 
         <div className="px-0.5 pt-5">

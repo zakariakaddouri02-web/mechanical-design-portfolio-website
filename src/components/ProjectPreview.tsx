@@ -13,7 +13,8 @@ export function ProjectPreview({ project, onClose }: ProjectPreviewProps) {
   const [viewerOpen, setViewerOpen] = useState(false);
   const isModel = project.type === "model3d";
   const images = getProjectImages(project);
-  const canOpen = isModel ? Boolean(project.model_url) : images.length > 0;
+  const isVideo = project.type === "video";
+  const canOpen = isModel ? Boolean(project.model_url) : isVideo ? Boolean(project.video_url) : images.length > 0;
 
   return (
     <>
@@ -49,7 +50,7 @@ export function ProjectPreview({ project, onClose }: ProjectPreviewProps) {
             type="button"
             disabled={!canOpen}
             onClick={() => setViewerOpen(true)}
-            aria-label={isModel ? "Tester le visualiseur 3D" : "Ouvrir la galerie d'images"}
+            aria-label={isModel ? "Tester le visualiseur 3D" : isVideo ? "Lire la vidéo" : "Ouvrir la galerie d'images"}
             className="group relative aspect-[4/3] overflow-hidden rounded-[14px] border border-[#e1e6ec] bg-[#edf0f4] text-left disabled:cursor-not-allowed"
           >
             {project.cover_url ? (
@@ -102,7 +103,7 @@ export function ProjectPreview({ project, onClose }: ProjectPreviewProps) {
               className="mt-7 inline-flex w-fit items-center gap-2 rounded-full bg-[#1557a8] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#0f468c] disabled:opacity-50"
             >
               <Eye size={15} />
-              {isModel ? "Tester le modèle 3D" : "Voir la galerie"}
+              {isModel ? "Tester le modèle 3D" : isVideo ? "Lire la vidéo" : "Voir la galerie"}
             </button>
             <p className="mt-4 text-xs leading-5 text-[#949ca6]">
               Cet aperçu utilise les fichiers sélectionnés sans les importer ni publier le projet.

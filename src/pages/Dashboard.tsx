@@ -321,6 +321,7 @@ export default function Dashboard() {
             <div className="divide-y divide-[#edf0f3]">
               {projects.map((project) => {
                 const isModel = project.type === "model3d";
+                const isVideo = project.type === "video";
                 const imageCount = getProjectImages(project).length;
                 const busy = busyId === project.id;
                 return (
@@ -335,7 +336,7 @@ export default function Dashboard() {
                       <div className="mb-2 flex flex-wrap items-center gap-2">
                         <span className="mono inline-flex items-center gap-1.5 rounded-full bg-[#eef3f9] px-2.5 py-1 text-[9px] uppercase text-[#1557a8]">
                           {isModel ? <Box size={11} /> : <Images size={11} />}
-                          {isModel ? "Modèle 3D" : `${imageCount} image${imageCount > 1 ? "s" : ""}`}
+                          {isModel ? "Modèle 3D" : isVideo ? "Vidéo" : `${imageCount} image${imageCount > 1 ? "s" : ""}`}
                         </span>
                         <span
                           className={`mono rounded-full px-2.5 py-1 text-[9px] uppercase ${

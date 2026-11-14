@@ -5,6 +5,7 @@ import {
   ImagePlus,
   Images,
   Save,
+  Play,
   Upload,
   X,
 } from "lucide-react";
@@ -40,16 +41,19 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
   const [coverUrl, setCoverUrl] = useState("");
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
   const [modelUrl, setModelUrl] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
   const [autoRotate, setAutoRotate] = useState(true);
   const [isPublished, setIsPublished] = useState(false);
 
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [modelFile, setModelFile] = useState<File | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
 
   const [coverPreview, setCoverPreview] = useState("");
   const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
   const [modelPreview, setModelPreview] = useState("");
+  const [videoPreview, setVideoPreview] = useState("");
 
   const [previewProject, setPreviewProject] = useState<Project | null>(null);
   const [saving, setSaving] = useState(false);
@@ -63,11 +67,13 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
     setCoverUrl(project?.cover_url || "");
     setGalleryUrls(project?.image_urls || []);
     setModelUrl(project?.model_url || "");
+    setVideoUrl(project?.video_url || "");
     setAutoRotate(project?.auto_rotate ?? true);
     setIsPublished(project?.is_published || false);
     setCoverFile(null);
     setGalleryFiles([]);
     setModelFile(null);
+    setVideoFile(null);
     setError("");
   }, [project]);
 
@@ -97,8 +103,19 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
     return () => URL.revokeObjectURL(url);
   }, [modelFile]);
 
+  useEffect(() => {
+    if (!videoFile) {
+      setVideoPreview("");
+      return;
+    }
+    const url = URL.createObjectURL(videoFile);
+    setVideoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [videoFile]);
+
   const coverSource = coverPreview || coverUrl;
   const modelSource = modelPreview || modelUrl;
+  const videoSource = videoPreview || videoUrl;
   const galleryItems: GalleryItem[] = [
     ...galleryUrls.map((url, index) => ({
       key: `saved-${index}`,
@@ -155,6 +172,17 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
     setError("");
   }
 
+  function chooseVideo(file?: File) {
+    if (!file) return;
+    const validation = validateAssetFile(file, "video");
+    if (validation) {
+      setError(validation);
+      return;
+    }
+    setVideoFile(file);
+    setError("");
+  }
+
   function removeGalleryItem(item: GalleryItem) {
     if (item.kind === "saved") {
       setGalleryUrls((urls) => urls.filter((_, index) => index !== item.index));
@@ -177,6 +205,10 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
       setError(`Importez un fichier .${modelFormat} pour ce projet 3D.`);
       return null;
     }
+    if (type === "video" && !videoSource) {
+      setError("Importez une vidéo MP4 ou WebM pour ce projet.");
+      return null;
+    }
 
     const timestamp = new Date().toISOString();
     return {
@@ -187,6 +219,7 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
       cover_url: coverSource,
       image_urls: type === "images" ? [...galleryUrls, ...galleryPreviews] : [],
       model_url: type === "model3d" ? modelSource : null,
+      video_url: type === "video" ? videoSource : null,
       model_format: type === "model3d" ? modelFormat : "glb",
       auto_rotate: type === "model3d" ? autoRotate : false,
       is_published: isPublished,
@@ -225,6 +258,9 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
             ? await uploadProjectAsset(modelFile, "model")
             : modelUrl
           : null;
+      const finalVideoUrl = type === "video"
+        ? videoFile ? await uploadProjectAsset(videoFile, "video") : videoUrl
+        : null;
 
       const payload: ProjectInput = {
         title: draft.title,
@@ -233,6 +269,7 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
         cover_url: finalCoverUrl,
         image_urls: type === "images" ? [...galleryUrls, ...uploadedGallery] : [],
         model_url: finalModelUrl,
+        video_url: finalVideoUrl,
         model_format: type === "model3d" ? modelFormat : "glb",
         auto_rotate: draft.auto_rotate,
         is_published: draft.is_published,
@@ -314,7 +351,7 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
 
         <fieldset>
           <legend className="mb-2 text-xs font-semibold text-[#34404d]">Type de projet *</legend>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
             <button
               type="button"
               onClick={() => setType("images")}
@@ -330,6 +367,15 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
                 <strong className="block font-semibold">Galerie d'images</strong>
                 <span className="text-xs opacity-70">Une ou plusieurs images</span>
               </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setType("video")}
+              aria-pressed={type === "video"}
+              className={`flex items-center gap-3 rounded-[12px] border px-4 py-3.5 text-left text-sm transition ${type === "video" ? "border-[#1557a8] bg-[#f1f6fd] text-[#1557a8]" : "border-[#dce2e9] bg-white text-[#52606e] hover:border-[#a9bdd6]"}`}
+            >
+              <Play size={18} strokeWidth={1.8} />
+              <span><strong className="block font-semibold">Vidéo</strong><span className="text-xs opacity-70">Lecture après clic</span></span>
             </button>
             <button
               type="button"
@@ -501,6 +547,26 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
                 />
                 Activer la rotation automatique à l'ouverture
               </label>
+            </div>
+          )}
+
+          {type === "video" && (
+            <div className="space-y-3 sm:col-span-2">
+              <span className="block text-xs font-semibold text-[#34404d]">Vidéo du projet *</span>
+              <label htmlFor="video-input" className={uploadBoxClass}>
+                <Play size={18} className="text-[#1557a8]" strokeWidth={1.8} />
+                <span className="font-medium text-[#34404d]">{videoSource ? "Remplacer la vidéo" : "Importer une vidéo"}</span>
+                <span>MP4 ou WebM · 50 Mo max. · la vidéo ne démarre pas automatiquement</span>
+              </label>
+              <input
+                id="video-input"
+                type="file"
+                accept="video/mp4,video/webm,.mp4,.webm"
+                className="sr-only"
+                onChange={(event) => { chooseVideo(event.target.files?.[0]); event.currentTarget.value = ""; }}
+              />
+              {videoFile && <p className="truncate text-xs text-[#6d7480]">{videoFile.name} · {formatBytes(videoFile.size)}</p>}
+              {videoSource && <video src={videoSource} poster={coverSource || undefined} controls playsInline preload="metadata" className="max-h-72 w-full rounded-[10px] bg-black" />}
             </div>
           )}
         </div>

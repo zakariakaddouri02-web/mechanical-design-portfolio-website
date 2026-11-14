@@ -2,6 +2,7 @@ import { supabase } from "./supabase";
 import {
   IMAGE_BUCKET,
   MODEL_BUCKET,
+  VIDEO_BUCKET,
   type Project,
   type ProjectInput,
 } from "./types";
@@ -9,6 +10,7 @@ import {
 const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "webp", "avif"];
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_MODEL_BYTES = 50 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 
 function getClient() {
   if (!supabase) throw new Error("Supabase n'est pas configuré.");
@@ -22,6 +24,7 @@ function normalizeProjects(data: unknown): Project[] {
     description: row.description || "",
     image_urls: Array.isArray(row.image_urls) ? row.image_urls : [],
     model_url: row.model_url || null,
+    video_url: row.video_url || null,
     model_format: row.model_format === "stl" ? "stl" : "glb",
     auto_rotate: Boolean(row.auto_rotate),
     is_published: Boolean(row.is_published),
@@ -101,7 +104,7 @@ function randomName(extension: string) {
 
 export function validateAssetFile(
   file: File,
-  kind: "image" | "model"
+  kind: "image" | "model" | "video"
 ): string | null {
   const extension = getExtension(file);
   if (kind === "image") {
@@ -109,30 +112,35 @@ export function validateAssetFile(
       return "Images acceptées : JPG, PNG, WEBP ou AVIF.";
     }
     if (file.size > MAX_IMAGE_BYTES) return "Image trop volumineuse (10 Mo max.).";
-  } else {
+  } else if (kind === "model") {
     if (!["glb", "stl"].includes(extension)) {
       return "Le modèle 3D doit être un fichier .glb ou .stl.";
     }
     if (file.size > MAX_MODEL_BYTES) return "Modèle trop volumineux (50 Mo max.).";
+  } else {
+    if (!["mp4", "webm"].includes(extension)) return "La vidéo doit être au format MP4 ou WebM.";
+    if (file.size > MAX_VIDEO_BYTES) return "Vidéo trop volumineuse (50 Mo max.).";
   }
   return null;
 }
 
 export async function uploadProjectAsset(
   file: File,
-  kind: "image" | "model"
+  kind: "image" | "model" | "video"
 ): Promise<string> {
   const validationError = validateAssetFile(file, kind);
   if (validationError) throw new Error(validationError);
 
   const client = getClient();
   const extension = getExtension(file);
-  const bucket = kind === "image" ? IMAGE_BUCKET : MODEL_BUCKET;
+  const bucket = kind === "image" ? IMAGE_BUCKET : kind === "model" ? MODEL_BUCKET : VIDEO_BUCKET;
   const path = randomName(extension);
   const contentType =
     kind === "model"
       ? extension === "stl" ? "model/stl" : "model/gltf-binary"
-      : file.type.startsWith("image/")
+      : kind === "video"
+        ? extension === "webm" ? "video/webm" : "video/mp4"
+        : file.type.startsWith("image/")
         ? file.type
         : `image/${extension === "jpg" ? "jpeg" : extension}`;
 
@@ -145,7 +153,7 @@ export async function uploadProjectAsset(
 }
 
 function storagePathFromPublicUrl(url: string) {
-  for (const bucket of [IMAGE_BUCKET, MODEL_BUCKET]) {
+  for (const bucket of [IMAGE_BUCKET, MODEL_BUCKET, VIDEO_BUCKET]) {
     const marker = `/storage/v1/object/public/${bucket}/`;
     const index = url.indexOf(marker);
     if (index >= 0) {
@@ -166,6 +174,7 @@ async function removeStoredAssets(project: Project) {
     project.cover_url,
     ...(project.image_urls || []),
     project.model_url || "",
+    project.video_url || "",
   ]
     .filter(Boolean)
     .map(storagePathFromPublicUrl)

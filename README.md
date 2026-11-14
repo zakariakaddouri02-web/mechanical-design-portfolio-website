@@ -80,6 +80,7 @@ Sans ces variables, la page publique affiche un **aperçu de démonstration** av
 
 1. Créez un projet sur [supabase.com](https://supabase.com).
 2. Ouvrez **SQL Editor → New query**.
+   Pour une base déjà créée, exécutez aussi `supabase/video-support.sql` afin d'ajouter le stockage des vidéos. Une nouvelle base reçoit ces éléments directement via `supabase/schema.sql`.
 3. Collez tout le contenu de `supabase/schema.sql`, puis cliquez sur **Run**.
 4. Sur un projet déjà initialisé, exécutez `supabase/site-settings.sql` pour l'image d'accueil et `supabase/stl-support.sql` pour les modèles STL.
 
@@ -87,11 +88,12 @@ Le script crée :
 
 | Élément | Rôle |
 | --- | --- |
-| `public.projects` | Titre, description, type (`images` / `model3d`), couverture, images, URL GLB, rotation auto, publication |
+| `public.projects` | Titre, description, type (`images` / `model3d` / `video`), couverture, images, URL 3D ou vidéo, publication |
 | `public.admin_users` | Liste des administrateurs ; contrainte `singleton` pour **un seul administrateur** |
 | `public.is_admin()` | Fonction `SECURITY DEFINER` utilisée par les politiques RLS |
 | `portfolio-images` | Bucket public en lecture, 10 Mo par image, JPG/PNG/WEBP/AVIF |
-| `portfolio-models` | Bucket public en lecture, 50 Mo par fichier, `.glb` uniquement |
+| `portfolio-models` | Bucket public en lecture, 50 Mo par fichier, GLB/STL |
+| `portfolio-videos` | Bucket public en lecture, 50 Mo par fichier, MP4 ou WebM |
 | Politiques RLS | Visiteurs : lecture des projets publiés uniquement. Administrateur : lecture de tout, création, modification, suppression et gestion des fichiers |
 | Publication Realtime | Met à jour automatiquement la page publique après changement |
 
@@ -129,7 +131,7 @@ Accédez à :
 
 Depuis le tableau de bord :
 
-- **Nouvelle réalisation** : titre, description, couverture, type, images multiples ou GLB.
+- **Nouvelle réalisation** : titre, description, couverture, galerie d'images, modèle 3D ou vidéo MP4/WebM.
 - **Modifier** : changer toutes les données, remplacer la couverture, ajouter/retirer des images, remplacer le GLB.
 - **Prévisualiser** : ouvre l'aperçu local, la galerie ou le visualiseur 3D **avant enregistrement**.
 - **Publier / Masquer** : contrôle la visibilité publique immédiate.
@@ -137,7 +139,7 @@ Depuis le tableau de bord :
 - **Aperçu** sur une ligne : ouvre le rendu public du projet, publié ou non.
 - **Réglages du site** : remplace l'image et les textes principaux du bloc d'accueil.
 
-Formats et limites : images jusqu'à 10 Mo, modèles GLB ou STL jusqu'à 50 Mo. Le GLB peut conserver ses matériaux; les STL reçoivent automatiquement un matériau acier dans le visualiseur.
+Formats et limites : images jusqu'à 10 Mo, modèles GLB ou STL et vidéos MP4/WebM jusqu'à 50 Mo. Les vidéos démarrent uniquement après un clic sur Lecture.
 
 ### Visualiseur 3D
 

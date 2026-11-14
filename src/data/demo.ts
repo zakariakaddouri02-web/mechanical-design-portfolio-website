@@ -17,6 +17,7 @@ const now = "2026-01-01T00:00:00.000Z";
 const base = {
   is_published: true,
   model_format: "glb" as const,
+  video_url: null,
   created_at: now,
   updated_at: now,
 };

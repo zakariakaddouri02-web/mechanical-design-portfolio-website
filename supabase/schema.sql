@@ -47,19 +47,22 @@ create table if not exists public.projects (
   id uuid primary key default gen_random_uuid(),
   title text not null check (char_length(btrim(title)) between 1 and 140),
   description text not null default '' check (char_length(description) <= 600),
-  type text not null check (type in ('images', 'model3d')),
+  type text not null check (type in ('images', 'model3d', 'video')),
   cover_url text not null check (char_length(btrim(cover_url)) > 0),
   image_urls text[] not null default '{}',
   model_url text,
+  video_url text,
   model_format text not null default 'glb' check (model_format in ('glb', 'stl')),
   auto_rotate boolean not null default false,
   is_published boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint projects_content_check check (
-    (type = 'images'   and model_url is null)
+    (type = 'images'   and model_url is null and video_url is null)
     or
-    (type = 'model3d' and model_url is not null and cardinality(image_urls) = 0)
+    (type = 'model3d' and model_url is not null and video_url is null and cardinality(image_urls) = 0)
+    or
+    (type = 'video' and model_url is null and video_url is not null and cardinality(image_urls) = 0)
   )
 );
 
@@ -140,6 +143,13 @@ values
     true,
     52428800,
     array['model/gltf-binary', 'application/octet-stream', 'model/stl', 'application/sla']
+  ),
+  (
+    'portfolio-videos',
+    'portfolio-videos',
+    true,
+    52428800,
+    array['video/mp4', 'video/webm']
   )
 on conflict (id) do update set
   public = excluded.public,
@@ -152,8 +162,10 @@ grant insert, update, delete on storage.objects to authenticated;
 
 drop policy if exists "public reads portfolio images" on storage.objects;
 drop policy if exists "public reads portfolio models" on storage.objects;
+drop policy if exists "public reads portfolio videos" on storage.objects;
 drop policy if exists "admin uploads portfolio images" on storage.objects;
 drop policy if exists "admin uploads portfolio models" on storage.objects;
+drop policy if exists "admin uploads portfolio videos" on storage.objects;
 drop policy if exists "admin manages portfolio assets" on storage.objects;
 drop policy if exists "admin updates portfolio assets" on storage.objects;
 drop policy if exists "admin deletes portfolio assets" on storage.objects;
@@ -167,6 +179,11 @@ create policy "public reads portfolio models"
   on storage.objects for select
   to anon, authenticated
   using (bucket_id = 'portfolio-models');
+
+create policy "public reads portfolio videos"
+  on storage.objects for select
+  to anon, authenticated
+  using (bucket_id = 'portfolio-videos');
 
 create policy "admin uploads portfolio images"
   on storage.objects for insert
@@ -186,15 +203,24 @@ create policy "admin uploads portfolio models"
     and lower(storage.extension(name)) in ('glb', 'stl')
   );
 
+create policy "admin uploads portfolio videos"
+  on storage.objects for insert
+  to authenticated
+  with check (
+    bucket_id = 'portfolio-videos'
+    and (select public.is_admin())
+    and lower(storage.extension(name)) in ('mp4', 'webm')
+  );
+
 create policy "admin updates portfolio assets"
   on storage.objects for update
   to authenticated
   using (
-    bucket_id in ('portfolio-images', 'portfolio-models')
+    bucket_id in ('portfolio-images', 'portfolio-models', 'portfolio-videos')
     and (select public.is_admin())
   )
   with check (
-    bucket_id in ('portfolio-images', 'portfolio-models')
+    bucket_id in ('portfolio-images', 'portfolio-models', 'portfolio-videos')
     and (select public.is_admin())
   );
 
@@ -202,7 +228,7 @@ create policy "admin deletes portfolio assets"
   on storage.objects for delete
   to authenticated
   using (
-    bucket_id in ('portfolio-images', 'portfolio-models')
+    bucket_id in ('portfolio-images', 'portfolio-models', 'portfolio-videos')
     and (select public.is_admin())
   );
 
