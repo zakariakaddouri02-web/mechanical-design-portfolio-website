@@ -25,10 +25,13 @@ import {
 import { supabase } from "../lib/supabase";
 import {
   DEFAULT_HERO_COPY,
+  DEFAULT_SITE_PROFILE,
   fetchSiteSettings,
   getHeroCopy,
+  getSiteProfile,
   saveSiteSettings,
   type HeroCopy,
+  type SiteProfile,
 } from "../lib/siteSettings";
 import { getProjectImages, type Project } from "../lib/types";
 import { errorMessage } from "../lib/utils";
@@ -46,6 +49,7 @@ export default function Dashboard() {
   const [heroFiles, setHeroFiles] = useState<File[]>([]);
   const [heroPreviews, setHeroPreviews] = useState<string[]>([]);
   const [heroCopy, setHeroCopy] = useState<HeroCopy>(DEFAULT_HERO_COPY);
+  const [siteProfile, setSiteProfile] = useState<SiteProfile>(DEFAULT_SITE_PROFILE);
   const [settingsBusy, setSettingsBusy] = useState(false);
   const [settingsError, setSettingsError] = useState("");
   const [settingsMessage, setSettingsMessage] = useState("");
@@ -57,6 +61,7 @@ export default function Dashboard() {
         if (!active) return;
         setHeroImages(settings?.hero_image_urls?.length ? settings.hero_image_urls : settings?.hero_image_url ? [settings.hero_image_url] : []);
         setHeroCopy(getHeroCopy(settings));
+        setSiteProfile(getSiteProfile(settings));
       })
       .catch((cause) => {
         if (active) setSettingsError(errorMessage(cause));
@@ -179,6 +184,29 @@ export default function Dashboard() {
     }
   }
 
+  async function handleSaveSiteProfile() {
+    setSettingsBusy(true);
+    setSettingsError("");
+    setSettingsMessage("");
+    try {
+      const email = siteProfile.email.trim();
+      const linkedin = siteProfile.linkedin.trim();
+      if (email && !/^\S+@\S+\.\S+$/.test(email)) throw new Error("Entrez une adresse e-mail valide.");
+      if (linkedin && !/^https?:\/\//i.test(linkedin)) throw new Error("Le lien LinkedIn doit commencer par https://.");
+      await saveSiteSettings({
+        site_name: siteProfile.name.trim(),
+        site_tagline: siteProfile.tagline.trim(),
+        contact_email: email,
+        linkedin_url: linkedin,
+      });
+      setSettingsMessage("Le nom et les coordonnées ont été enregistrés.");
+    } catch (cause) {
+      setSettingsError(errorMessage(cause));
+    } finally {
+      setSettingsBusy(false);
+    }
+  }
+
   const actionClass =
     "inline-flex items-center gap-1.5 rounded-full border border-[#dce2e9] bg-white px-3 py-2 text-xs font-medium text-[#4d5966] transition hover:border-[#9db8d8] hover:text-[#1557a8] disabled:opacity-45";
 
@@ -261,6 +289,16 @@ export default function Dashboard() {
             </div>
             {settingsMessage && <p role="status" className="mt-4 text-sm text-[#257245]">{settingsMessage}</p>}
             {settingsError && <p role="alert" className="mt-4 text-sm text-[#9b3b3b]">{settingsError}</p>}
+            <div className="mt-7 border-t border-[#e8ecf1] pt-6">
+              <h3 className="text-sm font-semibold text-[#202a36]">Nom et coordonnées</h3>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <label className="grid gap-2 text-xs font-medium text-[#4d5966]">Nom affiché<input value={siteProfile.name} onChange={(event) => setSiteProfile((profile) => ({ ...profile, name: event.target.value }))} maxLength={100} className="rounded-lg border border-[#d9e0e8] px-3 py-2.5 text-sm font-normal text-[#202a36] outline-none focus:border-[#1557a8]" /></label>
+                <label className="grid gap-2 text-xs font-medium text-[#4d5966]">Spécialité / slogan<input value={siteProfile.tagline} onChange={(event) => setSiteProfile((profile) => ({ ...profile, tagline: event.target.value }))} maxLength={160} className="rounded-lg border border-[#d9e0e8] px-3 py-2.5 text-sm font-normal text-[#202a36] outline-none focus:border-[#1557a8]" /></label>
+                <label className="grid gap-2 text-xs font-medium text-[#4d5966]">Adresse e-mail<input type="email" value={siteProfile.email} onChange={(event) => setSiteProfile((profile) => ({ ...profile, email: event.target.value }))} maxLength={200} className="rounded-lg border border-[#d9e0e8] px-3 py-2.5 text-sm font-normal text-[#202a36] outline-none focus:border-[#1557a8]" /></label>
+                <label className="grid gap-2 text-xs font-medium text-[#4d5966]">URL LinkedIn<input type="url" value={siteProfile.linkedin} onChange={(event) => setSiteProfile((profile) => ({ ...profile, linkedin: event.target.value }))} maxLength={500} placeholder="https://www.linkedin.com/in/..." className="rounded-lg border border-[#d9e0e8] px-3 py-2.5 text-sm font-normal text-[#202a36] outline-none focus:border-[#1557a8]" /></label>
+              </div>
+              <button type="button" onClick={() => void handleSaveSiteProfile()} disabled={settingsBusy} className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#1557a8] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#0f468c] disabled:opacity-50"><Save size={14} /> {settingsBusy ? "Enregistrement..." : "Enregistrer le profil"}</button>
+            </div>
             <div className="mt-7 border-t border-[#e8ecf1] pt-6">
               <h3 className="text-sm font-semibold text-[#202a36]">Texte d'accueil</h3>
               <div className="mt-4 grid gap-4">

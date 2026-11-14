@@ -243,6 +243,10 @@ create table if not exists public.site_settings (
   hero_title text,
   hero_description text,
   hero_cta text,
+  site_name text,
+  site_tagline text,
+  contact_email text,
+  linkedin_url text,
   updated_at timestamptz not null default now()
 );
 

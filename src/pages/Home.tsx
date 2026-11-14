@@ -8,10 +8,12 @@ import { DEMO_PROJECTS } from "../data/demo";
 import { fetchPublishedProjects } from "../lib/projects";
 import {
   DEFAULT_HERO_COPY,
+  DEFAULT_SITE_PROFILE,
   fetchSiteSettings,
   getHeroCopy,
+  getSiteProfile,
 } from "../lib/siteSettings";
-import { contactEmail, isSupabaseConfigured, linkedInUrl, supabase } from "../lib/supabase";
+import { isSupabaseConfigured, supabase } from "../lib/supabase";
 import type { Project } from "../lib/types";
 import { errorMessage } from "../lib/utils";
 
@@ -90,6 +92,7 @@ export default function Home() {
   const [heroImages, setHeroImages] = useState<string[]>([heroRender]);
   const [heroIndex, setHeroIndex] = useState(0);
   const [heroCopy, setHeroCopy] = useState(DEFAULT_HERO_COPY);
+  const [siteProfile, setSiteProfile] = useState(DEFAULT_SITE_PROFILE);
 
   useEffect(() => {
     let active = true;
@@ -102,6 +105,7 @@ export default function Home() {
         setHeroImages(images);
         setHeroIndex(0);
         setHeroCopy(getHeroCopy(settings));
+        setSiteProfile(getSiteProfile(settings));
       })
       .catch(() => undefined);
     return () => {
@@ -126,7 +130,7 @@ export default function Home() {
               ZK
             </span>
             <span className="text-[11px] font-bold tracking-[0.16em] text-[#121820] sm:text-[13px]">
-              ZAKARIA KADDOURI
+              {siteProfile.name}
             </span>
           </a>
           <nav className="flex items-center gap-5 text-[13px] font-medium text-[#59636f] sm:gap-8">
@@ -264,19 +268,19 @@ export default function Home() {
           <div>
             <p className="mono text-[10px] uppercase text-[#1557a8]">Contact</p>
             <h2 className="mt-3 text-2xl font-semibold tracking-[-0.035em] text-[#111820] sm:text-3xl">
-              ZAKARIA KADDOURI
+              {siteProfile.name}
             </h2>
-            <p className="mt-2 text-sm text-[#7a828d]">Mechanical Design & SolidWorks</p>
+            <p className="mt-2 text-sm text-[#7a828d]">{siteProfile.tagline}</p>
           </div>
           <div className="flex flex-col gap-3 text-sm font-medium">
             <a
-              href={`mailto:${contactEmail}`}
+              href={`mailto:${siteProfile.email}`}
               className="inline-flex items-center gap-2.5 text-[#26313e] transition hover:text-[#1557a8]"
             >
-              <Mail size={16} strokeWidth={1.8} /> {contactEmail}
+              <Mail size={16} strokeWidth={1.8} /> {siteProfile.email}
             </a>
             <a
-              href={linkedInUrl}
+              href={siteProfile.linkedin}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-2.5 text-[#26313e] transition hover:text-[#1557a8]"
@@ -291,7 +295,7 @@ export default function Home() {
         </div>
         <div className="border-t border-[#edf0f3]">
           <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-3 px-5 py-5 text-[11px] text-[#949ca6] sm:px-8 lg:px-10">
-            <span>© {new Date().getFullYear()} ZAKARIA KADDOURI</span>
+            <span>© {new Date().getFullYear()} {siteProfile.name}</span>
             <span className="mono text-[9px] uppercase">Conception mécanique · Modélisation 3D</span>
             <Link to="/admin/login" className="transition hover:text-[#1557a8]">
               Administration

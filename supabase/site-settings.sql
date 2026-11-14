@@ -8,6 +8,10 @@ create table if not exists public.site_settings (
   hero_title text,
   hero_description text,
   hero_cta text,
+  site_name text,
+  site_tagline text,
+  contact_email text,
+  linkedin_url text,
   updated_at timestamptz not null default now()
 );
 
@@ -16,6 +20,10 @@ alter table public.site_settings add column if not exists hero_image_urls text[]
 alter table public.site_settings add column if not exists hero_title text;
 alter table public.site_settings add column if not exists hero_description text;
 alter table public.site_settings add column if not exists hero_cta text;
+alter table public.site_settings add column if not exists site_name text;
+alter table public.site_settings add column if not exists site_tagline text;
+alter table public.site_settings add column if not exists contact_email text;
+alter table public.site_settings add column if not exists linkedin_url text;
 
 alter table public.site_settings enable row level security;
 grant select on public.site_settings to anon, authenticated;
