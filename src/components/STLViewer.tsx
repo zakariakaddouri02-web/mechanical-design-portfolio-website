@@ -8,6 +8,7 @@ import {
   Group,
   Mesh,
   MeshStandardMaterial,
+  MOUSE,
   PerspectiveCamera,
   PMREMGenerator,
   Scene,
@@ -95,6 +96,10 @@ export function STLViewer({
       controls.enableDamping = true;
       controls.dampingFactor = 0.07;
       controls.screenSpacePanning = true;
+      controls.mouseButtons.LEFT = 2;
+      controls.mouseButtons.MIDDLE = MOUSE.DOLLY;
+      controls.mouseButtons.RIGHT = MOUSE.ROTATE;
+      controls.mouseButtons.LEFT = MOUSE.PAN;
       cameraResetRef.current = () => {
         const current = model;
         if (current) current.rotation.set(0, 0, 0);
@@ -253,7 +258,7 @@ export function STLViewer({
         </div>
       </div>
       <div className="pointer-events-none absolute bottom-3 left-3 right-3 z-10 sm:bottom-5 sm:left-5 sm:right-5">
-        <p className="mono w-fit max-w-[80%] rounded-full bg-white/80 px-3 py-2 text-[9px] leading-4 text-[#596572] backdrop-blur-sm sm:text-[10px]">{alt} · Glisser : rotation · Molette : zoom · Clic droit : déplacement</p>
+        <p className="mono w-fit max-w-[80%] rounded-full bg-white/80 px-3 py-2 text-[9px] leading-4 text-[#596572] backdrop-blur-sm sm:text-[10px]">{alt} · Clic gauche : déplacer · Clic droit : rotation · Molette : zoom</p>
       </div>
     </div>
   );
