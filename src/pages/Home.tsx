@@ -87,7 +87,8 @@ function SkeletonGrid() {
 export default function Home() {
   const { projects, loading, error, reload } = usePublishedProjects();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [heroImage, setHeroImage] = useState(heroRender);
+  const [heroImages, setHeroImages] = useState<string[]>([heroRender]);
+  const [heroIndex, setHeroIndex] = useState(0);
   const [heroCopy, setHeroCopy] = useState(DEFAULT_HERO_COPY);
 
   useEffect(() => {
@@ -95,7 +96,11 @@ export default function Home() {
     void fetchSiteSettings()
       .then((settings) => {
         if (!active) return;
-        if (settings?.hero_image_url) setHeroImage(settings.hero_image_url);
+        const images = settings?.hero_image_urls?.length
+          ? settings.hero_image_urls
+          : settings?.hero_image_url ? [settings.hero_image_url] : [heroRender];
+        setHeroImages(images);
+        setHeroIndex(0);
         setHeroCopy(getHeroCopy(settings));
       })
       .catch(() => undefined);
@@ -103,6 +108,14 @@ export default function Home() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (heroImages.length < 2) return;
+    const timer = window.setInterval(() => {
+      setHeroIndex((current) => (current + 1) % heroImages.length);
+    }, 4500);
+    return () => window.clearInterval(timer);
+  }, [heroImages.length]);
 
   return (
     <div className="min-h-screen bg-[#f7f8fa]">
@@ -163,13 +176,11 @@ export default function Home() {
 
             <div className="reveal reveal-delay-2 relative">
               <div className="absolute -bottom-5 -left-5 hidden h-32 w-32 rounded-2xl border border-[#1557a8]/15 blueprint-grid-fine sm:block" />
-              <div className="relative rounded-[16px] border border-[#dfe5ec] bg-white p-2 shadow-[0_25px_70px_rgba(24,40,64,0.12)]">
+              <div className="hero-float relative rounded-[16px] border border-[#dfe5ec] bg-white p-2 shadow-[0_25px_70px_rgba(24,40,64,0.12)]">
                 <div className="relative aspect-[4/3] overflow-hidden rounded-[10px] bg-[#eef1f4]">
-                  <img
-                    src={heroImage}
-                    alt="Rendu CAO d'un assemblage mécanique"
-                    className="h-full w-full object-cover"
-                  />
+                  {heroImages.map((image, index) => (
+                    <img key={`${image}-${index}`} src={image} alt="Rendu CAO d'un assemblage mécanique" className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${index === heroIndex ? "opacity-100" : "opacity-0"}`} />
+                  ))}
                   <div className="absolute bottom-3 left-3 rounded-full border border-white/70 bg-white/90 px-3 py-2 backdrop-blur-sm">
                     <span className="mono text-[9px] uppercase text-[#1557a8]">
                       CAO / Assemblage 3D
@@ -180,10 +191,8 @@ export default function Home() {
                   <span className="mono text-[9px] uppercase text-[#89919b]">
                     SolidWorks · Rendu technique
                   </span>
-                  <span className="flex gap-1.5">
-                    <i className="h-1.5 w-1.5 rounded-full bg-[#1557a8]" />
-                    <i className="h-1.5 w-1.5 rounded-full bg-[#c9d2dc]" />
-                    <i className="h-1.5 w-1.5 rounded-full bg-[#c9d2dc]" />
+                  <span className="flex gap-1.5" aria-label={`Image ${heroIndex + 1} sur ${heroImages.length}`}>
+                    {heroImages.map((image, index) => <button key={`${image}-${index}`} type="button" onClick={() => setHeroIndex(index)} aria-label={`Afficher l'image ${index + 1}`} aria-current={index === heroIndex} className={`h-1.5 w-1.5 rounded-full transition-colors ${index === heroIndex ? "bg-[#1557a8]" : "bg-[#c9d2dc]"}`} />)}
                   </span>
                 </div>
               </div>

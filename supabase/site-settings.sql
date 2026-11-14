@@ -3,6 +3,7 @@
 create table if not exists public.site_settings (
   id smallint primary key default 1 check (id = 1),
   hero_image_url text,
+  hero_image_urls text[] not null default '{}',
   hero_eyebrow text,
   hero_title text,
   hero_description text,
@@ -11,6 +12,7 @@ create table if not exists public.site_settings (
 );
 
 alter table public.site_settings add column if not exists hero_eyebrow text;
+alter table public.site_settings add column if not exists hero_image_urls text[] not null default '{}';
 alter table public.site_settings add column if not exists hero_title text;
 alter table public.site_settings add column if not exists hero_description text;
 alter table public.site_settings add column if not exists hero_cta text;

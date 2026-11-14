@@ -238,6 +238,7 @@ create policy "admin deletes portfolio assets"
 create table if not exists public.site_settings (
   id smallint primary key default 1 check (id = 1),
   hero_image_url text,
+  hero_image_urls text[] not null default '{}',
   hero_eyebrow text,
   hero_title text,
   hero_description text,

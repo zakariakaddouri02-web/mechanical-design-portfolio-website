@@ -20,6 +20,7 @@ import {
   fetchAllProjects,
   setProjectPublished,
   uploadProjectAsset,
+  validateAssetFile,
 } from "../lib/projects";
 import { supabase } from "../lib/supabase";
 import {
@@ -41,9 +42,9 @@ export default function Dashboard() {
   const [editor, setEditor] = useState<{ project: Project | null } | null>(null);
   const [viewProject, setViewProject] = useState<Project | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [heroImage, setHeroImage] = useState<string | null>(null);
-  const [heroFile, setHeroFile] = useState<File | null>(null);
-  const [heroPreview, setHeroPreview] = useState<string | null>(null);
+  const [heroImages, setHeroImages] = useState<string[]>([]);
+  const [heroFiles, setHeroFiles] = useState<File[]>([]);
+  const [heroPreviews, setHeroPreviews] = useState<string[]>([]);
   const [heroCopy, setHeroCopy] = useState<HeroCopy>(DEFAULT_HERO_COPY);
   const [settingsBusy, setSettingsBusy] = useState(false);
   const [settingsError, setSettingsError] = useState("");
@@ -54,7 +55,7 @@ export default function Dashboard() {
     void fetchSiteSettings()
       .then((settings) => {
         if (!active) return;
-        setHeroImage(settings?.hero_image_url || null);
+        setHeroImages(settings?.hero_image_urls?.length ? settings.hero_image_urls : settings?.hero_image_url ? [settings.hero_image_url] : []);
         setHeroCopy(getHeroCopy(settings));
       })
       .catch((cause) => {
@@ -66,14 +67,10 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    if (!heroFile) {
-      setHeroPreview(null);
-      return;
-    }
-    const preview = URL.createObjectURL(heroFile);
-    setHeroPreview(preview);
-    return () => URL.revokeObjectURL(preview);
-  }, [heroFile]);
+    const previews = heroFiles.map((file) => URL.createObjectURL(file));
+    setHeroPreviews(previews);
+    return () => previews.forEach((preview) => URL.revokeObjectURL(preview));
+  }, [heroFiles]);
 
   const load = useCallback(async () => {
     if (!supabase) {
@@ -146,16 +143,16 @@ export default function Dashboard() {
   }
 
   async function handleSaveHeroImage() {
-    if (!heroFile) return;
     setSettingsBusy(true);
     setSettingsError("");
     setSettingsMessage("");
     try {
-      const url = await uploadProjectAsset(heroFile, "image");
-      await saveSiteSettings({ hero_image_url: url });
-      setHeroImage(url);
-      setHeroFile(null);
-      setSettingsMessage("L'image d'accueil a été mise à jour.");
+      const uploaded = await Promise.all(heroFiles.map((file) => uploadProjectAsset(file, "image")));
+      const urls = [...heroImages, ...uploaded];
+      await saveSiteSettings({ hero_image_url: urls[0] || null, hero_image_urls: urls });
+      setHeroImages(urls);
+      setHeroFiles([]);
+      setSettingsMessage("Les images d'accueil ont été mises à jour.");
     } catch (cause) {
       setSettingsError(errorMessage(cause));
     } finally {
@@ -245,22 +242,22 @@ export default function Dashboard() {
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="mono text-[10px] uppercase text-[#1557a8]">Réglages du site</p>
-                <h2 className="mt-2 text-lg font-semibold text-[#202a36]">Image d'accueil</h2>
-                <p className="mt-1 text-sm text-[#7a828d]">Choisissez le visuel affiché en haut du portfolio. JPG, PNG, WEBP ou AVIF, 10 Mo maximum.</p>
+                <h2 className="mt-2 text-lg font-semibold text-[#202a36]">Images d'accueil</h2>
+                <p className="mt-1 text-sm text-[#7a828d]">Ajoutez plusieurs images : elles défileront automatiquement dans le visuel flottant. JPG, PNG, WEBP ou AVIF, 10 Mo maximum chacune.</p>
               </div>
-              {(heroPreview || heroImage) && (
-                <img src={heroPreview || heroImage || undefined} alt="Aperçu de l'image d'accueil" className="h-24 w-36 rounded-lg border border-[#e1e6ec] object-cover" />
-              )}
             </div>
+            {(heroImages.length > 0 || heroPreviews.length > 0) && <div className="mt-4 flex flex-wrap gap-3">
+              {heroImages.map((image, index) => <div key={`saved-${image}`} className="group relative h-24 w-32 overflow-hidden rounded-lg border border-[#e1e6ec]"><img src={image} alt={`Image d'accueil ${index + 1}`} className="h-full w-full object-cover" /><button type="button" onClick={() => setHeroImages((current) => current.filter((_, itemIndex) => itemIndex !== index))} aria-label={`Retirer l'image ${index + 1}`} className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white/95 text-[#9b3b3b] opacity-0 shadow transition group-hover:opacity-100">×</button></div>)}
+              {heroPreviews.map((image, index) => <div key={`new-${index}`} className="group relative h-24 w-32 overflow-hidden rounded-lg border border-dashed border-[#1557a8]"><img src={image} alt={`Nouvelle image ${index + 1}`} className="h-full w-full object-cover" /><button type="button" onClick={() => setHeroFiles((current) => current.filter((_, itemIndex) => itemIndex !== index))} aria-label={`Retirer la nouvelle image ${index + 1}`} className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white/95 text-[#9b3b3b] opacity-0 shadow transition group-hover:opacity-100">×</button></div>)}
+            </div>}
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#dce2e9] bg-white px-4 py-2.5 text-xs font-medium text-[#4d5966] hover:border-[#9db8d8] hover:text-[#1557a8]">
-                <ImagePlus size={15} /> Choisir une image
-                <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="sr-only" onChange={(event) => setHeroFile(event.target.files?.[0] || null)} />
+                <ImagePlus size={15} /> Ajouter des images
+                <input type="file" multiple accept="image/jpeg,image/png,image/webp,image/avif" className="sr-only" onChange={(event) => { const files = Array.from(event.target.files || []); const invalid = files.map((file) => validateAssetFile(file, "image")).find(Boolean); if (invalid) setSettingsError(invalid); else { setHeroFiles((current) => [...current, ...files]); setSettingsError(""); } event.currentTarget.value = ""; }} />
               </label>
-              <button type="button" onClick={() => void handleSaveHeroImage()} disabled={!heroFile || settingsBusy} className="inline-flex items-center gap-2 rounded-full bg-[#1557a8] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#0f468c] disabled:opacity-50">
-                <Save size={14} /> {settingsBusy ? "Enregistrement..." : "Enregistrer"}
+              <button type="button" onClick={() => void handleSaveHeroImage()} disabled={settingsBusy} className="inline-flex items-center gap-2 rounded-full bg-[#1557a8] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#0f468c] disabled:opacity-50">
+                <Save size={14} /> {settingsBusy ? "Enregistrement..." : "Enregistrer les images"}
               </button>
-              {heroFile && <span className="max-w-xs truncate text-xs text-[#7a828d]">{heroFile.name}</span>}
             </div>
             {settingsMessage && <p role="status" className="mt-4 text-sm text-[#257245]">{settingsMessage}</p>}
             {settingsError && <p role="alert" className="mt-4 text-sm text-[#9b3b3b]">{settingsError}</p>}
