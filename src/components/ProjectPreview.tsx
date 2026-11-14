@@ -103,7 +103,7 @@ export function ProjectPreview({ project, onClose }: ProjectPreviewProps) {
               className="mt-7 inline-flex w-fit items-center gap-2 rounded-full bg-[#1557a8] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#0f468c] disabled:opacity-50"
             >
               <Eye size={15} />
-              {isModel ? "Tester le modèle 3D" : isVideo ? "Lire la vidéo" : "Voir la galerie"}
+              {isModel ? "Voir la galerie et le modèle 3D" : isVideo ? "Lire la vidéo" : "Voir la galerie"}
             </button>
             <p className="mt-4 text-xs leading-5 text-[#949ca6]">
               Cet aperçu utilise les fichiers sélectionnés sans les importer ni publier le projet.

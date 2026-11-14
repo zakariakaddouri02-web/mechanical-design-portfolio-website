@@ -80,7 +80,7 @@ Sans ces variables, la page publique affiche un **aperçu de démonstration** av
 
 1. Créez un projet sur [supabase.com](https://supabase.com).
 2. Ouvrez **SQL Editor → New query**.
-   Pour une base déjà créée, exécutez aussi `supabase/video-support.sql` afin d'ajouter le stockage des vidéos. Une nouvelle base reçoit ces éléments directement via `supabase/schema.sql`.
+   Pour une base déjà créée, exécutez `supabase/video-support.sql` (support vidéo), puis `supabase/mixed-gallery-support.sql` (galerie images + modèle 3D). Une nouvelle base reçoit ces éléments via `supabase/schema.sql`.
 3. Collez tout le contenu de `supabase/schema.sql`, puis cliquez sur **Run**.
 4. Sur un projet déjà initialisé, exécutez `supabase/site-settings.sql` pour l'image d'accueil et `supabase/stl-support.sql` pour les modèles STL.
 

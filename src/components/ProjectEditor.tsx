@@ -217,7 +217,7 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
       description: description.trim(),
       type,
       cover_url: coverSource,
-      image_urls: type === "images" ? [...galleryUrls, ...galleryPreviews] : [],
+      image_urls: type !== "video" ? [...galleryUrls, ...galleryPreviews] : [],
       model_url: type === "model3d" ? modelSource : null,
       video_url: type === "video" ? videoSource : null,
       model_format: type === "model3d" ? modelFormat : "glb",
@@ -246,7 +246,7 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
         : coverUrl;
 
       const uploadedGallery: string[] = [];
-      if (type === "images") {
+      if (type !== "video") {
         for (const file of galleryFiles) {
           uploadedGallery.push(await uploadProjectAsset(file, "image"));
         }
@@ -267,7 +267,7 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
         description: draft.description,
         type,
         cover_url: finalCoverUrl,
-        image_urls: type === "images" ? [...galleryUrls, ...uploadedGallery] : [],
+        image_urls: type !== "video" ? [...galleryUrls, ...uploadedGallery] : [],
         model_url: finalModelUrl,
         video_url: finalVideoUrl,
         model_format: type === "model3d" ? modelFormat : "glb",
@@ -389,8 +389,8 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
             >
               <Box size={18} strokeWidth={1.8} />
               <span>
-                <strong className="block font-semibold">Modèle 3D</strong>
-                <span className="text-xs opacity-70">GLB ou STL avec acier</span>
+                <strong className="block font-semibold">Modèle 3D + images</strong>
+                <span className="text-xs opacity-70">Galerie mixte, image affichée d'abord</span>
               </span>
             </button>
           </div>
@@ -436,7 +436,7 @@ export function ProjectEditor({ project, onClose, onSaved }: ProjectEditorProps)
             </div>
           </div>
 
-          {type === "images" && (
+          {type !== "video" && (
             <div className="sm:col-span-2">
               <span className="mb-2 block text-xs font-semibold text-[#34404d]">
                 Images supplémentaires

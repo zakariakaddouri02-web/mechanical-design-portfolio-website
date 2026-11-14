@@ -1,6 +1,5 @@
 import { ArrowUpRight, Play } from "lucide-react";
 import type { Project } from "../lib/types";
-import { ProjectCardModelPreview } from "./ProjectCardModelPreview";
 
 interface ProjectCardProps {
   project: Project;
@@ -21,17 +20,13 @@ export function ProjectCard({ project, index, onOpen }: ProjectCardProps) {
         className="block w-full rounded-[14px] text-left focus-visible:outline-offset-6"
       >
         <div className="relative aspect-[4/3] overflow-hidden rounded-[14px] border border-[#e4e8ed] bg-[#e9edf1] shadow-[0_10px_30px_rgba(22,36,56,0.045)] transition duration-500 group-hover:shadow-[0_20px_45px_rgba(22,36,56,0.11)]">
-          {project.type === "model3d" && project.model_url ? (
-            <ProjectCardModelPreview project={project} />
-          ) : (
-            <img
+          <img
               src={project.cover_url}
               alt={project.title}
               loading="lazy"
               decoding="async"
               className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.045]"
             />
-          )}
           {project.type === "video" ? (
             <span className="absolute inset-0 flex items-center justify-center">
               <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 text-[#1557a8] shadow-lg transition duration-300 group-hover:scale-110"><Play size={22} fill="currentColor" strokeWidth={1.8} /></span>

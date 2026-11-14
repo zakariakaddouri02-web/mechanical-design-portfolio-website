@@ -60,7 +60,7 @@ create table if not exists public.projects (
   constraint projects_content_check check (
     (type = 'images'   and model_url is null and video_url is null)
     or
-    (type = 'model3d' and model_url is not null and video_url is null and cardinality(image_urls) = 0)
+    (type = 'model3d' and model_url is not null and video_url is null)
     or
     (type = 'video' and model_url is null and video_url is not null and cardinality(image_urls) = 0)
   )
