@@ -2,7 +2,6 @@ import { Move3D, Play } from "lucide-react";
 import { getProjectImages, type Project } from "../lib/types";
 import { ImageLightbox } from "./ImageLightbox";
 import { Modal } from "./Modal";
-import { Model3DViewer } from "./Model3DViewer";
 import { STLViewer } from "./STLViewer";
 
 interface ProjectViewerProps {
@@ -64,22 +63,13 @@ export function ProjectViewer({ project, onClose }: ProjectViewerProps) {
       </div>
 
       {project.model_url ? (
-        project.model_format === "stl" ? (
-          <STLViewer
-            src={project.model_url}
-            alt={project.title}
-            initialAutoRotate={project.auto_rotate}
-            className="h-[58vh] min-h-[340px] sm:h-[64vh]"
-          />
-        ) : (
-          <Model3DViewer
-            src={project.model_url}
-            poster={project.cover_url}
-            alt={project.title}
-            initialAutoRotate={project.auto_rotate}
-            className="h-[58vh] min-h-[340px] sm:h-[64vh]"
-          />
-        )
+        <STLViewer
+          src={project.model_url}
+          alt={project.title}
+          format={project.model_format}
+          initialAutoRotate={project.auto_rotate}
+          className="h-[58vh] min-h-[340px] sm:h-[64vh]"
+        />
       ) : (
         <div className="flex h-[50vh] items-center justify-center px-6 text-center text-sm text-[#6d7480]">
           Aucun fichier 3D n'est associé à ce projet.

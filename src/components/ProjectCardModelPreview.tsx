@@ -96,17 +96,22 @@ export function ProjectCardModelPreview({ project }: ProjectCardModelPreviewProp
             disposeObject(object);
             return;
           }
-          model = object;
-          const bounds = new Box3().setFromObject(object);
+          const wrapper = new Group();
+          wrapper.add(object);
+          wrapper.updateMatrixWorld(true);
+          const bounds = new Box3().setFromObject(wrapper);
           const center = bounds.getCenter(new Vector3());
-          object.position.sub(center);
           const size = bounds.getSize(new Vector3());
           const radius = Math.max(size.length() / 2, 0.01);
+          wrapper.position.sub(center);
+          wrapper.updateMatrixWorld(true);
+          model = wrapper;
           camera.position.set(radius * 2.45, radius * 1.55, radius * 2.45);
+          camera.lookAt(0, 0, 0);
           camera.near = Math.max(radius / 1000, 0.001);
           camera.far = radius * 100;
           camera.updateProjectionMatrix();
-          scene.add(object);
+          scene.add(wrapper);
           setReady(true);
           renderer?.setAnimationLoop(() => {
             if (!renderer || !scene) return;
@@ -115,12 +120,13 @@ export function ProjectCardModelPreview({ project }: ProjectCardModelPreviewProp
           });
         };
 
+        pmrem = new PMREMGenerator(renderer);
+        const room = new RoomEnvironment();
+        environment = pmrem.fromScene(room).texture;
+        scene.environment = environment;
+        room.dispose();
+
         if (project.model_format === "stl") {
-          pmrem = new PMREMGenerator(renderer);
-          const room = new RoomEnvironment();
-          environment = pmrem.fromScene(room).texture;
-          scene.environment = environment;
-          room.dispose();
           const stlLoader = new STLLoader();
           stlLoader.load(
             modelUrl,
@@ -146,7 +152,22 @@ export function ProjectCardModelPreview({ project }: ProjectCardModelPreviewProp
         } else {
           new GLTFLoader().load(
             modelUrl,
-            (gltf) => fitModel(gltf.scene || new Group()),
+            (gltf) => {
+              const steel = new MeshStandardMaterial({
+                color: "#9ca8b4",
+                metalness: 0.82,
+                roughness: 0.26,
+                envMapIntensity: 1.35,
+              });
+              gltf.scene.traverse((child) => {
+                const mesh = child as Mesh;
+                if (!mesh.isMesh) return;
+                const oldMaterials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+                oldMaterials.forEach((material) => material.dispose());
+                mesh.material = steel;
+              });
+              fitModel(gltf.scene || new Group());
+            },
             undefined,
             () => {
               // The cover image remains visible if the 3D preview cannot load.

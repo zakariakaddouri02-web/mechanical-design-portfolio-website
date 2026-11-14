@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import {
   ACESFilmicToneMapping,
   AmbientLight,
+  Box3,
   Color,
   DirectionalLight,
+  Group,
   Mesh,
   MeshStandardMaterial,
   PerspectiveCamera,
@@ -16,11 +18,14 @@ import {
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import type { Object3D } from "three";
 import { Maximize2, Minimize2, RefreshCw, RotateCcw, TriangleAlert } from "lucide-react";
 
 interface STLViewerProps {
   src: string;
   alt: string;
+  format?: "stl" | "glb";
   initialAutoRotate?: boolean;
   className?: string;
 }
@@ -30,13 +35,13 @@ const INITIAL_BACKGROUND = 0xe9eef3;
 export function STLViewer({
   src,
   alt,
+  format = "stl",
   initialAutoRotate = true,
   className = "h-[62vh] min-h-[360px]",
 }: STLViewerProps) {
   const frameRef = useRef<HTMLDivElement>(null);
   const hostRef = useRef<HTMLDivElement>(null);
   const autoRotateRef = useRef(initialAutoRotate);
-  const meshRef = useRef<Mesh | null>(null);
   const cameraResetRef = useRef<(() => void) | null>(null);
   const [loading, setLoading] = useState(true);
   const [viewerError, setViewerError] = useState("");
@@ -54,8 +59,9 @@ export function STLViewer({
     setLoading(true);
     setViewerError("");
     let active = true;
-    let geometry: import("three").BufferGeometry | null = null;
-    let material: MeshStandardMaterial | null = null;
+    let model: Object3D | null = null;
+    let cameraDistance = 5;
+    let materials: MeshStandardMaterial[] = [];
 
     try {
       const scene = new Scene();
@@ -90,9 +96,9 @@ export function STLViewer({
       controls.dampingFactor = 0.07;
       controls.screenSpacePanning = true;
       cameraResetRef.current = () => {
-        const current = meshRef.current;
+        const current = model;
         if (current) current.rotation.set(0, 0, 0);
-        camera.position.set(3, 2, 3);
+        camera.position.set(cameraDistance * 0.77, cameraDistance * 0.51, cameraDistance * 0.77);
         controls.target.set(0, 0, 0);
         controls.update();
       };
@@ -109,76 +115,98 @@ export function STLViewer({
       resize();
 
       renderer.setAnimationLoop(() => {
-        if (autoRotateRef.current && meshRef.current) {
-          meshRef.current.rotation.y += 0.003;
+        if (autoRotateRef.current && model) {
+          model.rotation.y += 0.003;
         }
         controls.update();
         renderer.render(scene, camera);
       });
 
-      const loader = new STLLoader();
-      loader.load(
-        src,
-        (loadedGeometry) => {
-          if (!active) {
-            loadedGeometry.dispose();
-            return;
-          }
-          geometry = loadedGeometry;
-          geometry.computeVertexNormals();
-          geometry.computeBoundingBox();
-          const center = geometry.boundingBox?.getCenter(new Vector3()) || new Vector3();
-          geometry.translate(-center.x, -center.y, -center.z);
-          geometry.computeBoundingSphere();
-          const radius = Math.max(geometry.boundingSphere?.radius || 1, 0.01);
+      const fitAndAdd = (object: Object3D) => {
+        if (!active) return;
+        const wrapper = new Group();
+        wrapper.add(object);
+        wrapper.updateMatrixWorld(true);
+        const bounds = new Box3().setFromObject(wrapper);
+        const center = bounds.getCenter(new Vector3());
+        const size = bounds.getSize(new Vector3());
+        const radius = Math.max(size.length() / 2, 0.01);
+        cameraDistance = radius * 3.65;
+        wrapper.position.sub(center);
+        wrapper.updateMatrixWorld(true);
+        model = wrapper;
+        scene.add(wrapper);
+        camera.position.set(radius * 2.7, radius * 1.8, radius * 2.7);
+        camera.near = Math.max(radius / 1000, 0.001);
+        camera.far = radius * 100;
+        camera.updateProjectionMatrix();
+        controls.target.set(0, 0, 0);
+        controls.minDistance = radius * 1.05;
+        controls.maxDistance = radius * 12;
+        controls.update();
+        setLoading(false);
+      };
 
-          material = new MeshStandardMaterial({
+      const steelMaterial = () => {
+        const steel = new MeshStandardMaterial({
             color: "#9ca8b4",
             metalness: 0.82,
             roughness: 0.26,
             envMapIntensity: 1.35,
           });
-          const mesh = new Mesh(geometry, material);
-          meshRef.current = mesh;
-          scene.add(mesh);
+        materials.push(steel);
+        return steel;
+      };
 
-          camera.position.set(radius * 2.7, radius * 1.8, radius * 2.7);
-          camera.near = Math.max(radius / 1000, 0.001);
-          camera.far = radius * 100;
-          camera.updateProjectionMatrix();
-          controls.target.set(0, 0, 0);
-          controls.minDistance = radius * 1.05;
-          controls.maxDistance = radius * 12;
-          controls.update();
-          setLoading(false);
-        },
-        undefined,
-        (error) => {
+      const onLoadError = (error: unknown) => {
+        if (!active) return;
+        setViewerError(error instanceof Error ? error.message : `Le fichier ${format.toUpperCase()} n'a pas pu être chargé.`);
+        setLoading(false);
+      };
+
+      if (format === "stl") {
+        new STLLoader().load(src, (geometry) => {
+          if (!active) { geometry.dispose(); return; }
+          geometry.computeVertexNormals();
+          const mesh = new Mesh(geometry, steelMaterial());
+          fitAndAdd(mesh);
+        }, undefined, onLoadError);
+      } else {
+        new GLTFLoader().load(src, (gltf) => {
           if (!active) return;
-          setViewerError(error instanceof Error ? error.message : "Le fichier STL n'a pas pu être chargé.");
-          setLoading(false);
-        }
-      );
+          const steel = steelMaterial();
+          gltf.scene.traverse((child) => {
+            const mesh = child as Mesh;
+            if (!mesh.isMesh) return;
+            const oldMaterials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+            oldMaterials.forEach((material) => material.dispose());
+            mesh.material = steel;
+          });
+          fitAndAdd(gltf.scene);
+        }, undefined, onLoadError);
+      }
 
       return () => {
         active = false;
         resizeObserver.disconnect();
         renderer.setAnimationLoop(null);
         controls.dispose();
-        geometry?.dispose();
-        material?.dispose();
+        model?.traverse((child) => {
+          const mesh = child as Mesh;
+          if (mesh.isMesh) mesh.geometry.dispose();
+        });
+        materials.forEach((material) => material.dispose());
         environment.dispose();
         pmrem.dispose();
         renderer.dispose();
         renderer.domElement.remove();
-        meshRef.current = null;
         cameraResetRef.current = null;
       };
     } catch (error) {
       setViewerError(error instanceof Error ? error.message : "Le visualiseur STL n'a pas pu démarrer.");
       setLoading(false);
     }
-  }, [src]);
+  }, [src, format]);
 
   useEffect(() => {
     setAutoRotate(initialAutoRotate);
@@ -207,7 +235,7 @@ export function STLViewer({
           <div className="max-w-md text-center">
             <TriangleAlert className="mx-auto mb-4 text-[#b45309]" size={26} strokeWidth={1.7} />
             <p className="text-sm leading-6 text-[#3f4853]">{viewerError}</p>
-            <a href={src} target="_blank" rel="noreferrer" className="mt-5 inline-block text-sm font-medium text-[#1557a8] underline">Ouvrir le fichier STL</a>
+            <a href={src} target="_blank" rel="noreferrer" className="mt-5 inline-block text-sm font-medium text-[#1557a8] underline">Ouvrir le fichier {format.toUpperCase()}</a>
           </div>
         </div>
       )}
